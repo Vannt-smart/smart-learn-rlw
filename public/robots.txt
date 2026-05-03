@@ -1,0 +1,11 @@
+# Smart learn - Nền tảng học thông minh
+# Tối ưu hóa SEO: Hướng dẫn trình thu thập thông tin web (Crawlers)
+
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /admin/
+Disallow: /uploads/
+Disallow: /private/
+
+Sitemap: http://smartlearnapp.net/sitemap.xml
