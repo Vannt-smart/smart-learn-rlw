@@ -32,4 +32,11 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  optimizeDeps: {
+    // pdfjs-dist sử dụng các Web API (Worker, Blob, ...) ngay khi module được khởi tạo.
+    // Nếu để Vite pre-bundle nó, esbuild sẽ chạy code đó trước khi có browser context
+    // và gây ra lỗi "TypeError: Illegal constructor".
+    // Loại trừ nó khỏi quá trình tối ưu để browser tự load trực tiếp khi cần.
+    exclude: ["pdfjs-dist"],
+  },
 }));
