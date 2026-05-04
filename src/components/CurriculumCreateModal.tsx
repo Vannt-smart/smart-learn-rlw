@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, ArrowLeft, Upload, ImagePlus, X, BookOpen } from "lucide-react";
+import { Plus, ArrowLeft, Upload, ImagePlus, X, BookOpen, Globe, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { apiFetch, API_BASE_URL } from "@/lib/api";

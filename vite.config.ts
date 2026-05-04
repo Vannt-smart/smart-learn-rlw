@@ -32,21 +32,11 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-  optimizeDeps: {
-    // Loại trừ pdfjs-dist khỏi quá trình pre-bundle của Vite (dev server).
-    // pdfjs-dist chạy code browser-API ngay khi module được khởi tạo, gây lỗi
-    // "TypeError: Illegal constructor" nếu esbuild đưa nó vào bundle sớm.
-    exclude: ["pdfjs-dist"],
-  },
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          // Tách pdfjs-dist thành chunk riêng trong production build.
-          // Kết hợp với React.lazy trên UploadPage, đảm bảo pdfjs không bao giờ
-          // chạy lúc khởi động app.
-          "pdfjs-dist": ["pdfjs-dist"],
-        },
+        // manualChunks can sometimes cause issues with dynamic imports
+        // if not configured correctly. Let Vite handle it naturally.
       },
     },
   },
