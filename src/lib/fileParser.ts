@@ -1,9 +1,12 @@
-import * as pdfjsLib from "pdfjs-dist";
-
-// Set the worker source
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
+// pdfjs-dist phải được lazy-load (dynamic import) bên trong hàm để tránh lỗi
+// "Illegal constructor" xảy ra khi bundler khởi tạo module ở thời điểm build/load.
+// Không được dùng top-level `import * as pdfjsLib from "pdfjs-dist"`.
 
 export async function extractTextFromPDF(file: File): Promise<string> {
+  // Lazy-load pdfjs chỉ khi thực sự cần (tránh Illegal constructor)
+  const pdfjsLib = await import("pdfjs-dist");
+  pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
+
   const arrayBuffer = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
   const pages: string[] = [];

@@ -202,7 +202,9 @@ app.post(`${API_PREFIX}/upload`, (req, res) => {
         original_id uuid,
         username text,
         deleted_at timestamptz NOT NULL DEFAULT now()
-      );`
+      );`,
+      // Cho phép email là NULL (nhiều user tạo bởi admin có thể không có email)
+      `ALTER TABLE users ALTER COLUMN email DROP NOT NULL;`
     ];
 
     for (const q of queries) {
@@ -838,11 +840,13 @@ app.post(`${API_PREFIX}/users`, async (req, res) => {
 
   try {
     const hash = await hashPassword(password);
+    // Dùng null thay vì chuỗi rỗng để tránh vi phạm ràng buộc UNIQUE trên cột email
+    const emailValue = email?.trim() || null;
     const { rows } = await query(
       `insert into users (username, email, password_hash, display_name, role, education_level, plan, plan_start_date, plan_end_date)
        values ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        returning id, username, email, display_name as "displayName", role, education_level as "educationLevel", is_active as "isActive", plan, plan_start_date::text as "planStartDate", plan_end_date::text as "planEndDate", created_at as "createdAt"`,
-      [username.trim(), email?.trim() || "", hash, display_name?.trim() || username.trim(), role, education_level || null, plan, plan_start_date, plan_end_date]
+      [username.trim(), emailValue, hash, display_name?.trim() || username.trim(), role, education_level || null, plan, plan_start_date, plan_end_date]
     );
 
     const newUser = rows[0];
@@ -856,7 +860,12 @@ app.post(`${API_PREFIX}/users`, async (req, res) => {
 
     res.status(201).json(newUser);
   } catch (err) {
-    res.status(500).json({ error: "Tạo người dùng thất bại, vui lòng thử lại sau" });
+    console.error("POST /users Error:", err.message);
+    try { await fs.appendFile(path.join(projectRoot, "server_error.log"), `[${new Date().toISOString()}] POST /users Error: ${err.message}\n${err.stack}\n`); } catch (e) { }
+    if (err.message?.includes("unique constraint") || err.message?.includes("duplicate key")) {
+      return res.status(400).json({ error: "Tên đăng nhập hoặc email đã được sử dụng" });
+    }
+    res.status(500).json({ error: "Tạo người dùng thất bại, vui lòng thử lại sau", details: err.message });
   }
 });
 
