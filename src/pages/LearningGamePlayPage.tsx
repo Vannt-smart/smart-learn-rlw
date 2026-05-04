@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { apiFetch } from "@/lib/api";
+import { getAssetUrl } from "@/lib/utils";
 import { toast } from "sonner";
 
 interface LearningQuestion {
@@ -193,7 +194,7 @@ export default function LearningGamePlayPage() {
                 
                 <div className="w-full flex-1 min-h-0 rounded-3xl overflow-hidden bg-[#F8FAFC] p-2 border border-slate-100 shadow-inner">
                   <img 
-                    src={currentQuestion?.image_url} 
+                    src={getAssetUrl(currentQuestion?.image_url)} 
                     alt="Illustration"
                     className="w-full h-full object-contain rounded-2xl transition-transform duration-500 hover:scale-105"
                   />
@@ -208,7 +209,7 @@ export default function LearningGamePlayPage() {
                <div className="w-full flex-1 flex flex-col items-center justify-center space-y-6">
                  <div className="w-full flex-1 min-h-0 rounded-3xl overflow-hidden bg-white">
                     <img 
-                      src={currentQuestion?.image_url} 
+                      src={getAssetUrl(currentQuestion?.image_url)} 
                       alt="Illustration"
                       className="w-full h-full object-contain"
                     />
