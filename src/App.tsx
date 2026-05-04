@@ -1,3 +1,4 @@
+import React, { Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -11,7 +12,9 @@ import SubjectsPage from "./pages/SubjectsPage";
 import CoursesPage from "./pages/CoursesPage";
 import LessonsPage from "./pages/LessonsPage";
 import LessonDetailPage from "./pages/LessonDetailPage";
-import UploadPage from "./pages/UploadPage";
+// Lazy-load UploadPage để tách pdfjs-dist ra khỏi bundle ban đầu,
+// tránh lỗi "TypeError: Illegal constructor" khi pdfjs khởi tạo sớm.
+const UploadPage = React.lazy(() => import("./pages/UploadPage"));
 import ImportPage from "./pages/ImportPage";
 import TeacherPage from "./pages/TeacherPage";
 import LoginPage from "./pages/LoginPage";
@@ -116,6 +119,17 @@ const App = () => (
             <Route path="/admin/quiz-repository" element={<ProtectedRoute requiredRole={["admin", "teacher"]}><QuizRepositoryPage /></ProtectedRoute>} />
 
 
+            {/* Các route dùng UploadPage bọc trong Suspense vì lazy-loaded */}
+            <Route
+              path="/upload"
+              element={
+                <ProtectedRoute>
+                  <Suspense fallback={<div className="flex items-center justify-center h-screen">Đang tải...</div>}>
+                    <UploadPage />
+                  </Suspense>
+                </ProtectedRoute>
+              }
+            />
             <Route path="/p/:slug" element={<StaticPage />} />
             <Route path="/contact" element={<ContactPage />} />
             <Route path="/premium" element={<PremiumPage />} />

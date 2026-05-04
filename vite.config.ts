@@ -33,10 +33,21 @@ export default defineConfig(({ mode }) => ({
     },
   },
   optimizeDeps: {
-    // pdfjs-dist sử dụng các Web API (Worker, Blob, ...) ngay khi module được khởi tạo.
-    // Nếu để Vite pre-bundle nó, esbuild sẽ chạy code đó trước khi có browser context
-    // và gây ra lỗi "TypeError: Illegal constructor".
-    // Loại trừ nó khỏi quá trình tối ưu để browser tự load trực tiếp khi cần.
+    // Loại trừ pdfjs-dist khỏi quá trình pre-bundle của Vite (dev server).
+    // pdfjs-dist chạy code browser-API ngay khi module được khởi tạo, gây lỗi
+    // "TypeError: Illegal constructor" nếu esbuild đưa nó vào bundle sớm.
     exclude: ["pdfjs-dist"],
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Tách pdfjs-dist thành chunk riêng trong production build.
+          // Kết hợp với React.lazy trên UploadPage, đảm bảo pdfjs không bao giờ
+          // chạy lúc khởi động app.
+          "pdfjs-dist": ["pdfjs-dist"],
+        },
+      },
+    },
   },
 }));
