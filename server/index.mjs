@@ -201,8 +201,10 @@ app.post(`${API_PREFIX}/upload`, (req, res) => {
         id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
         original_id uuid,
         username text,
+        reason text,
         deleted_at timestamptz NOT NULL DEFAULT now()
       );`,
+      `ALTER TABLE deleted_users ADD COLUMN IF NOT EXISTS reason text;`,
       // Cho phép email là NULL (nhiều user tạo bởi admin có thể không có email)
       `ALTER TABLE users ALTER COLUMN email DROP NOT NULL;`
     ];
@@ -709,16 +711,33 @@ app.get(`${API_PREFIX}/statistics/monthly-summary`, async (req, res) => {
         (SELECT count(*) FROM deleted_users WHERE deleted_at >= (SELECT previous_month_start FROM months) AND deleted_at < (SELECT current_month_start FROM months))::int as previous_deleted_users
     `);
 
+    const { rows: currentReasons } = await query(`
+      SELECT COALESCE(reason, 'Không rõ') as reason, count(*)::int as count 
+      FROM deleted_users 
+      WHERE deleted_at >= date_trunc('month', CURRENT_DATE)
+      GROUP BY reason
+    `);
+
+    const { rows: previousReasons } = await query(`
+      SELECT COALESCE(reason, 'Không rõ') as reason, count(*)::int as count 
+      FROM deleted_users 
+      WHERE deleted_at >= date_trunc('month', CURRENT_DATE - interval '1 month') 
+      AND deleted_at < date_trunc('month', CURRENT_DATE)
+      GROUP BY reason
+    `);
+
     const result = {
       currentMonth: {
         newUsers: rows[0]?.current_new_users || 0,
         loginUsers: rows[0]?.current_login_users || 0,
-        deletedUsers: rows[0]?.current_deleted_users || 0
+        deletedUsers: rows[0]?.current_deleted_users || 0,
+        deletionBreakdown: currentReasons
       },
       previousMonth: {
         newUsers: rows[0]?.previous_new_users || 0,
         loginUsers: rows[0]?.previous_login_users || 0,
-        deletedUsers: rows[0]?.previous_deleted_users || 0
+        deletedUsers: rows[0]?.previous_deleted_users || 0,
+        deletionBreakdown: previousReasons
       }
     };
     res.json(result);
@@ -891,7 +910,7 @@ app.delete(`${API_PREFIX}/users/:id`, async (req, res) => {
     }
 
     // Insert into deleted_users for statistics
-    await query(`insert into deleted_users (original_id, username) values ($1, $2)`, [id, rows[0]?.username]);
+    await query(`insert into deleted_users (original_id, username, reason) values ($1, $2, $3)`, [id, rows[0]?.username, reason]);
 
     await query(`delete from users where id = $1`, [id]);
     res.status(204).send();
@@ -3426,8 +3445,10 @@ app.delete(`${API_PREFIX}/nhanhnhuchop/questions/:id`, async (req, res) => {
 // Catch-all handler to serve index.html for SPA (placed at the end)
 
 app.use((req, res, next) => {
-  // If it's an API request that reached here, it's a 404
-  if (req.path.startsWith(API_PREFIX)) return res.status(404).json({ error: "Không tìm thấy" });
+  // If it's an API request or an asset request that reached here, it's a 404
+  if (req.path.startsWith(API_PREFIX) || req.path.startsWith("/uploads")) {
+    return res.status(404).json({ error: "Không tìm thấy" });
+  }
 
   res.sendFile(path.join(distDir, "index.html"), (err) => {
     if (err) {

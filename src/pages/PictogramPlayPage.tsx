@@ -294,13 +294,13 @@ export default function PictogramPlayPage() {
           </div>
 
           {/* Answer Boxes - Prominent & Large */}
-          <div className="flex flex-wrap justify-center gap-x-2 sm:gap-x-4 gap-y-3 sm:gap-y-5 py-3 sm:py-6 px-4 bg-white/40 backdrop-blur-sm rounded-2xl sm:rounded-[2rem] border-2 border-dashed border-primary/20 shrink-0">
+          <div className="flex flex-nowrap overflow-x-auto custom-scrollbar justify-start sm:justify-center items-center gap-x-2 sm:gap-x-4 py-6 sm:py-10 px-6 bg-white/40 backdrop-blur-sm rounded-2xl sm:rounded-[2rem] border-2 border-dashed border-primary/20 shrink-0 w-full">
             {(currentQuestion.answer || "").split("").map((char, charIdx) => {
               if (char === " ") {
                 return <div key={charIdx} className="w-6 sm:w-10" />; // Spacer
               }
               return (
-                <div key={charIdx} className="relative group scale-95 sm:scale-125 mx-0.5 sm:mx-1">
+                <div key={charIdx} className="relative group scale-95 sm:scale-125 mx-0.5 sm:mx-1 shrink-0">
                    <input
                     ref={el => {
                       if (inputRefs.current[currentIdx]) {
