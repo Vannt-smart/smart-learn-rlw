@@ -253,39 +253,39 @@ export default function PictogramPlayPage() {
   const currentAnswerState = userAnswers[currentIdx];
 
   return (
-    <div className="h-[calc(100vh-56px)] flex flex-col overflow-hidden p-2 sm:p-6 sm:pt-4 bg-muted/20">
+    <div className="h-[calc(100vh-56px)] flex flex-col overflow-hidden p-1 sm:p-6 sm:pt-4 bg-muted/20">
       {/* Top Bar */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-4 bg-card border border-border p-2 sm:p-4 rounded-2xl sm:rounded-3xl shadow-sm z-40 mb-2 sm:mb-4 shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 text-blue-600">
-            <Gamepad2 className="h-5 w-5" />
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-1 sm:gap-4 bg-card border border-border p-1.5 sm:p-4 rounded-xl sm:rounded-3xl shadow-sm z-40 mb-1 sm:mb-4 shrink-0">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-lg sm:rounded-xl bg-blue-100 text-blue-600">
+            <Gamepad2 className="h-4 w-4 sm:h-5 sm:w-5" />
           </div>
           <div>
-            <h1 className="font-heading text-lg font-bold leading-tight">Đuổi hình bắt chữ</h1>
-            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none">
+            <h1 className="font-heading text-sm sm:text-lg font-bold leading-tight">Đuổi hình bắt chữ</h1>
+            <p className="text-[8px] sm:text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none">
               Câu {currentIdx + 1} / {questions.length}
             </p>
           </div>
         </div>
 
         {/* Timer */}
-        <div className={`flex items-center gap-3 px-6 py-2 rounded-2xl border-2 transition-colors duration-500
+        <div className={`flex items-center gap-2 sm:gap-3 px-4 sm:px-6 py-1 sm:py-2 rounded-xl sm:rounded-2xl border-2 transition-colors duration-500
           ${timeLeft < 30 ? "border-red-200 bg-red-50 text-red-600 animate-pulse" : "border-primary/10 bg-primary/5 text-primary"}`}
         >
-          <Timer className="h-5 w-5" />
-          <span className="font-mono text-xl font-black">{formatTime(timeLeft)}</span>
+          <Timer className="h-4 w-4 sm:h-5 sm:w-5" />
+          <span className="font-mono text-base sm:text-xl font-black">{formatTime(timeLeft)}</span>
         </div>
 
-        <Button onClick={handleFinish} className="rounded-xl h-11 px-8 font-bold shadow-lg shadow-primary/20">
+        <Button onClick={handleFinish} size="sm" className="sm:h-11 sm:px-8 font-bold shadow-lg shadow-primary/20 rounded-lg sm:rounded-xl">
           Hoàn thành
         </Button>
       </div>
 
       <div className="flex-1 flex flex-col lg:flex-row gap-2 sm:gap-6 min-h-0">
         {/* Main Game Area */}
-        <div className="flex-1 flex flex-col gap-2 sm:gap-4 min-h-0 animate-fade-in order-2 lg:order-1">
+        <div className="flex-1 flex flex-col gap-1 sm:gap-4 min-h-0 animate-fade-in order-2 lg:order-1">
           {/* Image - Grows/Shrinks Flexibly */}
-          <div className="flex-1 min-h-[180px] sm:min-h-0 relative bg-muted/30 rounded-[1.5rem] sm:rounded-[2.5rem] border-2 sm:border-4 border-border/50 overflow-hidden shadow-inner flex items-center justify-center p-4 sm:p-8 group">
+          <div className="flex-1 min-h-0 relative bg-muted/30 rounded-xl sm:rounded-[2.5rem] border-2 sm:border-4 border-border/50 overflow-hidden shadow-inner flex items-center justify-center p-2 sm:p-8 group">
                <img 
                 src={getAssetUrl(currentQuestion.image_url)} 
                 alt="Pictogram" 
@@ -294,13 +294,13 @@ export default function PictogramPlayPage() {
           </div>
 
           {/* Answer Boxes - Prominent & Large */}
-          <div className="flex flex-nowrap overflow-x-auto custom-scrollbar justify-start sm:justify-center items-center gap-x-2 sm:gap-x-4 py-6 sm:py-10 px-6 bg-white/40 backdrop-blur-sm rounded-2xl sm:rounded-[2rem] border-2 border-dashed border-primary/20 shrink-0 w-full">
+          <div className="flex flex-wrap justify-center items-center gap-x-1.5 gap-y-2 sm:gap-x-4 py-3 sm:py-10 px-2 sm:px-6 bg-white/40 backdrop-blur-sm rounded-xl sm:rounded-[2rem] border-2 border-dashed border-primary/20 shrink-0 w-full">
             {(currentQuestion.answer || "").split("").map((char, charIdx) => {
               if (char === " ") {
-                return <div key={charIdx} className="w-6 sm:w-10" />; // Spacer
+                return <div key={charIdx} className="w-4 sm:w-10 h-1" />; // Spacer
               }
               return (
-                <div key={charIdx} className="relative group scale-95 sm:scale-125 mx-0.5 sm:mx-1 shrink-0">
+                <div key={charIdx} className="relative group shrink-0">
                    <input
                     ref={el => {
                       if (inputRefs.current[currentIdx]) {
@@ -318,34 +318,34 @@ export default function PictogramPlayPage() {
                       handleInputChange(e.currentTarget.value, charIdx, true);
                     }}
                     disabled={isFinished}
-                    className={`w-12 h-14 sm:w-14 sm:h-16 text-center rounded-none border-2 font-heading text-2xl sm:text-3xl font-black transition-all
+                    className={`w-9 h-11 sm:w-12 sm:h-14 text-center rounded-lg border-2 font-heading text-xl sm:text-2xl font-black transition-all
                       ${currentAnswerState[charIdx] 
-                        ? "border-primary bg-primary/10 text-primary shadow-xl shadow-primary/20 scale-105" 
-                        : "border-border bg-card hover:border-primary/40 focus:border-primary focus:ring-8 focus:ring-primary/10"
+                        ? "border-primary bg-primary/10 text-primary shadow-lg shadow-primary/10" 
+                        : "border-border bg-card hover:border-primary/40 focus:border-primary focus:ring-4 focus:ring-primary/10"
                       }
                       focus:outline-none uppercase
                     `}
                   />
-                  <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-6 h-1.5 bg-primary/20 rounded-full opacity-0 group-focus-within:opacity-100 transition-all blur-[1px]" />
+                  <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-6 h-1 bg-primary/20 rounded-full opacity-0 group-focus-within:opacity-100 transition-all blur-[1px]" />
                 </div>
               );
             })}
           </div>
 
           {/* Nav Controls - More Compact */}
-          <div className="flex items-center justify-between px-4 pb-2 shrink-0">
+          <div className="flex items-center justify-between px-2 sm:px-4 pb-1 sm:pb-2 shrink-0">
              <Button 
                variant="ghost" 
                disabled={currentIdx === 0} 
                onClick={() => setCurrentIdx(prev => prev - 1)}
                className={cn(
-                 "h-14 px-4 sm:px-8 rounded-2xl font-black uppercase tracking-widest gap-2 transition-all",
+                 "h-10 sm:h-14 px-2 sm:px-8 rounded-xl sm:rounded-2xl font-black uppercase text-xs sm:text-base tracking-widest gap-1 sm:gap-2 transition-all",
                  currentIdx === 0 
                    ? "text-gray-300 cursor-not-allowed" 
                    : "text-primary hover:bg-primary/5"
                )}
              >
-               <ChevronLeft className="h-5 w-5 sm:h-6 sm:w-6" /> Câu trước
+               <ChevronLeft className="h-4 w-4 sm:h-6 sm:w-6" /> Câu trước
              </Button>
 
              <div className="hidden sm:flex items-center gap-1.5">
@@ -363,13 +363,13 @@ export default function PictogramPlayPage() {
                disabled={currentIdx === questions.length - 1} 
                onClick={() => setCurrentIdx(prev => prev + 1)}
                className={cn(
-                 "h-14 px-4 sm:px-8 rounded-2xl font-black uppercase tracking-widest gap-2 transition-all",
+                 "h-10 sm:h-14 px-2 sm:px-8 rounded-xl sm:rounded-2xl font-black uppercase text-xs sm:text-base tracking-widest gap-1 sm:gap-2 transition-all",
                  currentIdx === questions.length - 1 
                    ? "text-gray-300 cursor-not-allowed" 
                    : "text-primary hover:bg-primary/5"
                )}
              >
-               Câu sau <ChevronRight className="h-5 w-5 sm:h-6 sm:w-6" />
+               Câu sau <ChevronRight className="h-4 w-4 sm:h-6 sm:w-6" />
              </Button>
           </div>
         </div>
@@ -381,7 +381,7 @@ export default function PictogramPlayPage() {
             <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Nhấn để chuyển nhanh</p>
           </div>
           
-          <div className="grid grid-cols-5 sm:grid-cols-10 lg:grid-cols-5 gap-3 overflow-y-auto pr-1 flex-1 content-start custom-scrollbar">
+          <div className="flex lg:grid lg:grid-cols-5 gap-3 overflow-x-auto lg:overflow-y-auto pb-2 lg:pb-0 pr-1 flex-1 content-start custom-scrollbar">
             {questions.map((_, idx) => {
               const isAnswered = userAnswers[idx]?.some(char => char !== "");
               const isCurrent = idx === currentIdx;

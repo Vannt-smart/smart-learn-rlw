@@ -164,6 +164,13 @@ export default function VuaTiengVietPlayPage() {
     const newAnswers = [...userAnswers];
     newAnswers[currentIdx] = val;
     setUserAnswers(newAnswers);
+    
+    // Reset checked status when user changes input to allow re-checking
+    if (checkedAnswers[currentIdx]) {
+      const newChecked = [...checkedAnswers];
+      newChecked[currentIdx] = false;
+      setCheckedAnswers(newChecked);
+    }
   };
 
   const checkCurrentAnswer = () => {
