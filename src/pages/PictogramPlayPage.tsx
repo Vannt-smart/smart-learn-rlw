@@ -51,7 +51,13 @@ function ResultOverlay({ score, total, onRetry, onHome, questions, userAnswers }
         {/* Detailed Review */}
         <div className="space-y-4 max-h-[40vh] overflow-y-auto pr-2 custom-scrollbar">
           {questions.map((q, idx) => {
-            const isCorrect = userAnswers[idx].replace(/\s+/g, '') === q.answer.replace(/\s+/g, '');
+            const original = q.answer;
+            const userStr = userAnswers[idx];
+            
+            const userNoAccent = removeAccents(userStr).replace(/[^A-Z0-9]/g, '');
+            const correctNoAccent = removeAccents(original).replace(/[^A-Z0-9]/g, '');
+            const isCorrect = userNoAccent === correctNoAccent && userNoAccent !== "";
+
             return (
               <div key={q.id} className={`flex items-center gap-4 p-4 rounded-2xl border ${isCorrect ? 'border-green-200 bg-green-50/50' : 'border-red-200 bg-red-50/50'}`}>
                 <div className="h-16 w-16 rounded-xl bg-white border border-border overflow-hidden shrink-0">
@@ -90,6 +96,14 @@ function ResultOverlay({ score, total, onRetry, onHome, questions, userAnswers }
     document.body
   );
 }
+
+const removeAccents = (str: string) => {
+  return str
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/đ/g, "d")
+    .replace(/Đ/g, "D");
+};
 
 export default function PictogramPlayPage() {
   const [searchParams] = useSearchParams();
@@ -149,12 +163,14 @@ export default function PictogramPlayPage() {
     let s = 0;
     const finalAnswers = userAnswers.map((ua, idx) => {
       const original = questions[idx].answer;
-      // Preserve spaces from original answer by checking the current character's index
+      // Preserve spaces from original answer
       const userStr = ua.map((char, i) => original[i] === " " ? " " : char).join('').toUpperCase();
       const correctStr = original.toUpperCase();
       
-      // Compare answers ignoring non-alphanumeric chars for robust scoring
-      if (userStr.replace(/[^A-ZÀ-Ỹ0-9]/g, '') === correctStr.replace(/[^A-ZÀ-Ỹ0-9]/g, '')) {
+      const userNoAccent = removeAccents(userStr).replace(/[^A-Z0-9]/g, '');
+      const correctNoAccent = removeAccents(correctStr).replace(/[^A-Z0-9]/g, '');
+
+      if (userNoAccent === correctNoAccent && userNoAccent !== "") {
         s++;
       }
       return userStr;
@@ -169,22 +185,19 @@ export default function PictogramPlayPage() {
   const handleInputChange = (val: string, charIdx: number, fromComposition = false) => {
     if (isFinished) return;
     
-    // Prevent jumping if we are currently composing a character (e.g. Telex/VNI)
-    // unless this call comes explicitly from onCompositionEnd
     const shouldSkipJump = isComposing && !fromComposition;
 
     const newAnswers = [...userAnswers];
-    // Take the last character typed
-    const char = val.slice(-1).toUpperCase();
+    // Take the last character typed and remove accents to display as English uppercase
+    const char = removeAccents(val.slice(-1)).toUpperCase();
     
-    // Validate: only alphanumeric + Vietnamese characters (broadened regex)
-    if (char && !/[A-Z0-9ÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚĂĐĨŨƠàáâãèéêìíòóôõùúăđĩũơƯĂÂÊÔƠƯÀẢÃÁẠĂẰẲẴẮẶÂẦẨẪẤẬÈẺẼÉẸÊỀỂỄẾỆÌỈĨÍỊÒỎÕÓỌÔỒỔỖỐỘƠỜỞỠỚỢÙỦŨÚỤƯỪỬỮỨỰỲỶỸÝỴ]/.test(char)) return;
+    // Only allow A-Z and 0-9
+    if (char && !/[A-Z0-9]/.test(char)) return;
 
     newAnswers[currentIdx][charIdx] = char;
     setUserAnswers(newAnswers);
 
-    // Disable auto-focus next box as per user request
-    /*
+    // Auto-focus next box
     if (!shouldSkipJump && char && charIdx < questions[currentIdx].answer.length - 1) {
       let next = charIdx + 1;
       while (next < questions[currentIdx].answer.length && questions[currentIdx].answer[next] === " ") {
@@ -196,24 +209,26 @@ export default function PictogramPlayPage() {
         }, 10);
       }
     }
-    */
   };
 
   const handleKeyDown = (e: React.KeyboardEvent, charIdx: number) => {
-    // Completely disable auto-jump on Backspace to solve IME issues for Vietnamese characters
-    /*
-    if (e.key === "Backspace" && !userAnswers[currentIdx][charIdx] && charIdx > 0) {
-      // Find previous non-space box
-      let prev = charIdx - 1;
-      while (prev >= 0 && questions[currentIdx].answer[prev] === " ") {
-        prev--;
+    if (e.key === "Backspace") {
+      if (!userAnswers[currentIdx][charIdx] && charIdx > 0) {
+        // Jump to previous if current is empty
+        let prev = charIdx - 1;
+        while (prev >= 0 && questions[currentIdx].answer[prev] === " ") {
+          prev--;
+        }
+        if (prev >= 0) {
+          inputRefs.current[currentIdx][prev]?.focus();
+        }
+      } else {
+        // Just clear current
+        const newAnswers = [...userAnswers];
+        newAnswers[currentIdx][charIdx] = "";
+        setUserAnswers(newAnswers);
       }
-      if (prev >= 0) {
-        inputRefs.current[currentIdx][prev]?.focus();
-      }
-    } else 
-    */
-    if (e.key === "ArrowLeft" && charIdx > 0) {
+    } else if (e.key === "ArrowLeft" && charIdx > 0) {
       let prev = charIdx - 1;
       while (prev >= 0 && questions[currentIdx].answer[prev] === " ") {
         prev--;
@@ -255,28 +270,28 @@ export default function PictogramPlayPage() {
   return (
     <div className="h-[calc(100vh-56px)] flex flex-col overflow-hidden p-1 sm:p-6 sm:pt-4 bg-muted/20">
       {/* Top Bar */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-1 sm:gap-4 bg-card border border-border p-1.5 sm:p-4 rounded-xl sm:rounded-3xl shadow-sm z-40 mb-1 sm:mb-4 shrink-0">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-1 sm:gap-4 bg-white/80 backdrop-blur-sm border border-border p-1.5 sm:p-4 rounded-xl sm:rounded-3xl shadow-sm z-40 mb-1 sm:mb-4 shrink-0">
         <div className="flex items-center gap-2 sm:gap-3">
-          <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-lg sm:rounded-xl bg-blue-100 text-blue-600">
+          <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-lg sm:rounded-xl bg-blue-100 text-blue-600 shadow-inner">
             <Gamepad2 className="h-4 w-4 sm:h-5 sm:w-5" />
           </div>
           <div>
-            <h1 className="font-heading text-sm sm:text-lg font-bold leading-tight">Đuổi hình bắt chữ</h1>
-            <p className="text-[8px] sm:text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none">
+            <h1 className="font-heading text-sm sm:text-lg font-black leading-tight">Đuổi hình bắt chữ</h1>
+            <p className="text-[8px] sm:text-[10px] font-black text-muted-foreground uppercase tracking-widest leading-none">
               Câu {currentIdx + 1} / {questions.length}
             </p>
           </div>
         </div>
 
         {/* Timer */}
-        <div className={`flex items-center gap-2 sm:gap-3 px-4 sm:px-6 py-1 sm:py-2 rounded-xl sm:rounded-2xl border-2 transition-colors duration-500
-          ${timeLeft < 30 ? "border-red-200 bg-red-50 text-red-600 animate-pulse" : "border-primary/10 bg-primary/5 text-primary"}`}
+        <div className={`flex items-center gap-2 sm:gap-3 px-4 sm:px-6 py-1 sm:py-2 rounded-xl sm:rounded-2xl border-2 transition-all duration-500
+          ${timeLeft < 30 ? "border-red-200 bg-red-50 text-red-600 animate-pulse" : "border-primary/10 bg-primary/5 text-primary shadow-sm"}`}
         >
           <Timer className="h-4 w-4 sm:h-5 sm:w-5" />
           <span className="font-mono text-base sm:text-xl font-black">{formatTime(timeLeft)}</span>
         </div>
 
-        <Button onClick={handleFinish} size="sm" className="sm:h-11 sm:px-8 font-bold shadow-lg shadow-primary/20 rounded-lg sm:rounded-xl">
+        <Button onClick={handleFinish} size="sm" className="sm:h-11 sm:px-8 font-black uppercase tracking-wider shadow-lg shadow-primary/20 rounded-lg sm:rounded-xl bg-primary hover:bg-primary/90">
           Hoàn thành
         </Button>
       </div>
@@ -285,7 +300,7 @@ export default function PictogramPlayPage() {
         {/* Main Game Area */}
         <div className="flex-1 flex flex-col gap-1 sm:gap-4 min-h-0 animate-fade-in order-2 lg:order-1">
           {/* Image - Grows/Shrinks Flexibly */}
-          <div className="flex-1 min-h-0 relative bg-muted/30 rounded-xl sm:rounded-[2.5rem] border-2 sm:border-4 border-border/50 overflow-hidden shadow-inner flex items-center justify-center p-2 sm:p-8 group">
+          <div className="flex-1 min-h-0 relative bg-white/50 backdrop-blur-sm rounded-xl sm:rounded-[2.5rem] border-2 sm:border-4 border-border/50 overflow-hidden shadow-xl shadow-muted/50 flex items-center justify-center p-2 sm:p-8 group">
                <img 
                 src={getAssetUrl(currentQuestion.image_url)} 
                 alt="Pictogram" 
@@ -294,7 +309,7 @@ export default function PictogramPlayPage() {
           </div>
 
           {/* Answer Boxes - Prominent & Large */}
-          <div className="flex flex-wrap justify-center items-center gap-x-1.5 gap-y-2 sm:gap-x-4 py-3 sm:py-10 px-2 sm:px-6 bg-white/40 backdrop-blur-sm rounded-xl sm:rounded-[2rem] border-2 border-dashed border-primary/20 shrink-0 w-full">
+          <div className="flex flex-wrap justify-center items-center gap-x-1.5 gap-y-2 sm:gap-x-4 py-3 sm:py-10 px-2 sm:px-6 bg-white/40 backdrop-blur-sm rounded-xl sm:rounded-[2rem] border-2 border-dashed border-primary/20 shrink-0 w-full shadow-lg">
             {(currentQuestion.answer || "").split("").map((char, charIdx) => {
               if (char === " ") {
                 return <div key={charIdx} className="w-4 sm:w-10 h-1" />; // Spacer
@@ -320,8 +335,8 @@ export default function PictogramPlayPage() {
                     disabled={isFinished}
                     className={`w-9 h-11 sm:w-12 sm:h-14 text-center rounded-lg border-2 font-heading text-xl sm:text-2xl font-black transition-all
                       ${currentAnswerState[charIdx] 
-                        ? "border-primary bg-primary/10 text-primary shadow-lg shadow-primary/10" 
-                        : "border-border bg-card hover:border-primary/40 focus:border-primary focus:ring-4 focus:ring-primary/10"
+                        ? "border-primary bg-primary text-white shadow-lg shadow-primary/20" 
+                        : "border-border bg-card hover:border-primary/40 focus:border-primary focus:ring-8 focus:ring-primary/10"
                       }
                       focus:outline-none uppercase
                     `}
@@ -375,10 +390,10 @@ export default function PictogramPlayPage() {
         </div>
 
         {/* Sidebar Navigation - Fits height */}
-        <div className="w-full lg:w-[300px] shrink-0 bg-card border border-border rounded-2xl sm:rounded-[2rem] p-3 sm:p-5 shadow-sm flex flex-col min-h-0 order-1 lg:order-2">
+        <div className="w-full lg:w-[300px] shrink-0 bg-white/80 backdrop-blur-sm border border-border rounded-2xl sm:rounded-[2rem] p-3 sm:p-5 shadow-sm flex flex-col min-h-0 order-1 lg:order-2">
           <div className="space-y-1 mb-4">
-            <h3 className="font-heading text-base font-bold leading-none">Danh sách câu hỏi</h3>
-            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Nhấn để chuyển nhanh</p>
+            <h3 className="font-heading text-base font-black leading-none uppercase">Tiến độ</h3>
+            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Nhấn để chuyển câu</p>
           </div>
           
           <div className="flex lg:grid lg:grid-cols-5 gap-3 overflow-x-auto lg:overflow-y-auto pb-2 lg:pb-0 pr-1 flex-1 content-start custom-scrollbar">
@@ -390,7 +405,7 @@ export default function PictogramPlayPage() {
                   key={idx}
                   onClick={() => setCurrentIdx(idx)}
                   className={`aspect-square h-9 sm:h-10 rounded-full font-mono text-xs sm:text-sm font-black transition-all flex items-center justify-center border-2
-                    ${isCurrent ? 'bg-primary text-primary-foreground border-primary shadow-md shadow-primary/20 z-10' : 
+                    ${isCurrent ? 'bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20 z-10' : 
                       isAnswered ? 'bg-primary/5 text-primary border-primary/20' : 'bg-muted/40 text-muted-foreground border-transparent hover:bg-muted'}
                   `}
                 >
@@ -401,10 +416,10 @@ export default function PictogramPlayPage() {
           </div>
 
           <div className="hidden sm:block pt-4 mt-4 border-t border-border shrink-0">
-             <div className="bg-blue-50/50 rounded-2xl p-3 flex items-start gap-3">
+             <div className="bg-blue-50/50 rounded-2xl p-3 flex items-start gap-3 border border-blue-100">
                <AlertCircle className="h-4 w-4 text-blue-600 mt-0.5 shrink-0" />
-               <p className="text-[10px] sm:text-xs text-blue-700 leading-relaxed font-medium">
-                 Bạn có thể làm bất kỳ câu nào trước. Nhấn <b>Hoàn thành</b> để nộp bài.
+               <p className="text-[10px] sm:text-xs text-blue-700 leading-relaxed font-bold">
+                 Nhập ký tự vào các ô trống. Hệ thống sẽ tự động chuyển ô tiếp theo.
                </p>
              </div>
           </div>
