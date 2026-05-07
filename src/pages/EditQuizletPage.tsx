@@ -3,7 +3,7 @@ import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { 
   Import, Trash2, GripVertical, Image as ImageIcon, Plus,
   ChevronLeft, ChevronRight, Maximize2, Minimize2, Play, Shuffle, Lightbulb,
-  Pause, Settings, Check, Lock, Globe
+  Pause, Settings, Check, Lock, Globe, X, CheckCircle2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -288,10 +288,8 @@ export default function EditQuizletPage() {
     const answer = testMode === 'front' ? card.definition : card.term;
     if (testInput.trim().toLowerCase() === answer.trim().toLowerCase()) {
       setTestResult('correct');
-      toast.success("Chính Xác");
     } else {
       setTestResult('incorrect');
-      toast.error("Không chính xác");
     }
   };
 
@@ -447,9 +445,52 @@ export default function EditQuizletPage() {
         )}
 
         {(testMode === 'front' || testMode === 'back') && (
-          <div className="mt-8 max-w-lg mx-auto flex gap-4">
-            <input type="text" className="flex-1 border p-3 rounded-lg" value={testInput} onChange={(e) => setTestInput(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleTestCheck()} placeholder="Nhập đáp án..." />
-            <Button onClick={handleTestCheck}>Kiểm tra</Button>
+          <div className="mt-8 max-w-lg mx-auto flex flex-col sm:flex-row gap-4 items-center">
+            <input 
+              type="text" 
+              className={cn(
+                "flex-1 w-full h-12 border-2 px-6 rounded-xl text-lg font-bold transition-all focus:outline-none focus:ring-4",
+                testResult === 'correct' ? "border-emerald-500 bg-emerald-50/50 text-emerald-700 focus:ring-emerald-500/10" :
+                testResult === 'incorrect' ? "border-red-500 bg-red-50/50 text-red-700 focus:ring-red-500/10" :
+                "border-gray-200 bg-white focus:border-[#2D9B63] focus:ring-[#2D9B63]/10"
+              )}
+              value={testInput} 
+              onChange={(e) => {
+                setTestInput(e.target.value);
+                setTestResult(null);
+              }} 
+              onKeyDown={(e) => e.key === 'Enter' && testInput.trim() && handleTestCheck()} 
+              placeholder="Nhập đáp án..." 
+            />
+            <Button 
+              onClick={handleTestCheck}
+              disabled={!testInput.trim()}
+              className={cn(
+                "h-12 px-10 rounded-xl font-black uppercase tracking-wider transition-all w-full sm:w-auto shadow-lg",
+                testResult === 'correct' 
+                  ? "bg-emerald-500 hover:bg-emerald-600 text-white shadow-emerald-200" 
+                  : testResult === 'incorrect'
+                    ? "bg-red-500 hover:bg-red-600 text-white shadow-red-200"
+                    : "bg-[#2D9B63] hover:bg-[#2D9B63]/90 text-white shadow-[#2D9B63]/20"
+              )}
+            >
+              {testResult === 'correct' ? (
+                <>
+                  <CheckCircle2 className="mr-2 h-5 w-5" />
+                  Chính xác
+                </>
+              ) : testResult === 'incorrect' ? (
+                <>
+                  <X className="mr-2 h-5 w-5" />
+                  Sai rồi
+                </>
+              ) : (
+                <>
+                  <Check className="mr-2 h-5 w-5" />
+                  Kiểm tra
+                </>
+              )}
+            </Button>
           </div>
         )}
 

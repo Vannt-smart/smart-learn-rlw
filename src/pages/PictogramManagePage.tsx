@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  ArrowLeft, Plus, Pencil, Trash2, ImageIcon, Loader2, X, AlertCircle, Upload, CheckCircle2
+  ArrowLeft, Plus, Pencil, Trash2, ImageIcon, Loader2, X, AlertCircle, Upload, CheckCircle2, Info
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { apiFetch } from "@/lib/api";
@@ -265,6 +265,7 @@ export default function PictogramManagePage() {
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const [editTarget, setEditTarget] = useState<PictogramQuestion | null>(null);
+  const [filterLevel, setFilterLevel] = useState<Level | "all">("all");
 
   const fetchQuestions = async () => {
     setLoading(true);
@@ -314,134 +315,198 @@ export default function PictogramManagePage() {
   }, {} as Record<Level, PictogramQuestion[]>);
 
   return (
-    <div className="container max-w-5xl py-8 space-y-8 min-h-screen pb-20">
-      {/* Header */}
-      <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
-        <button
-          onClick={() => navigate("/games")}
-          className="flex items-center justify-center h-10 w-10 rounded-xl bg-muted hover:bg-muted/80 transition-all hover:scale-105 active:scale-95 group"
-        >
-          <ArrowLeft className="h-5 w-5 text-muted-foreground group-hover:text-foreground" />
-        </button>
-        <div className="flex-1">
-          <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-500/10 text-blue-600">
-              <ImageIcon className="h-6 w-6" />
+    <div className="container max-w-7xl py-8 space-y-8 min-h-screen pb-20">
+      <div className="flex flex-col lg:flex-row gap-6">
+        {/* Left Column: Statistics */}
+        <aside className="w-full lg:w-72 shrink-0 space-y-6 order-2 lg:order-1">
+          <div className="bg-white border-2 border-border/40 rounded-[2.5rem] p-7 shadow-xl shadow-muted/10 sticky top-8 animate-in slide-in-from-left-4 duration-700">
+            <h3 className="font-heading text-[11px] font-black uppercase tracking-[0.2em] text-muted-foreground/70 mb-6 px-1">Thống kê cấp độ</h3>
+            
+            <div className="space-y-6">
+              <div className="p-5 rounded-2xl bg-emerald-50/60 border border-emerald-100 flex items-center justify-between group transition-all hover:bg-emerald-100/40">
+                <span className="font-bold text-emerald-800/80 text-sm">Tổng câu hỏi</span>
+                <span className="text-2xl font-black text-emerald-600 drop-shadow-sm">{questions.length}</span>
+              </div>
+
+              <div className="h-px bg-border/40 mx-1" />
+
+              <div className="space-y-4 px-1">
+                {LEVELS.map(lv => (
+                  <div key={lv.value} className="flex items-center justify-between py-1 group">
+                    <div className="flex items-center gap-3">
+                      <div className={`h-2.5 w-2.5 rounded-full shadow-sm ring-4 ring-white transition-transform group-hover:scale-125 ${lv.color.split(' ')[0]}`} />
+                      <span className="text-sm font-bold text-slate-500 group-hover:text-slate-800 transition-colors">{lv.label}</span>
+                    </div>
+                    <span className="font-black text-slate-700 tabular-nums">{groupedByLevel[lv.value].length}</span>
+                  </div>
+                ))}
+              </div>
             </div>
-            <div>
-              <h1 className="font-heading text-3xl font-bold tracking-tight">
-                Đuổi hình bắt chữ
-              </h1>
-              <p className="text-muted-foreground text-sm flex items-center gap-2 mt-0.5">
-                Quản lý kho câu hỏi hình ảnh · <span className="font-bold text-primary">{questions.length}</span> câu hỏi
+
+            <div className="mt-10 p-5 rounded-[2rem] bg-blue-50/40 border border-blue-100/60 flex gap-4">
+              <div className="h-9 w-9 rounded-xl bg-white flex items-center justify-center shrink-0 shadow-sm border border-blue-50">
+                <Info className="h-4 w-4 text-blue-500" />
+              </div>
+              <p className="text-[9px] leading-relaxed text-blue-600/70 font-black uppercase tracking-tight">
+                Hệ thống tự động phân loại để tối ưu trải nghiệm học tập.
               </p>
             </div>
           </div>
-        </div>
-        <Button 
-          onClick={() => setShowCreate(true)} 
-          className="rounded-full h-10 px-6 font-bold bg-primary text-white hover:brightness-110 transition-all active:scale-95 shadow-lg shadow-primary/20"
-        >
-          <Plus className="h-4 w-4 mr-2" /> Tạo mới
-        </Button>
-      </div>
+        </aside>
 
-      {/* List */}
-      {loading ? (
-        <div className="flex flex-col items-center justify-center py-32 space-y-4">
-          <Loader2 className="h-10 w-10 animate-spin text-primary" />
-          <p className="text-muted-foreground font-medium animate-pulse">Đang tải kho câu hỏi...</p>
-        </div>
-      ) : questions.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-24 text-center gap-4 border-4 border-dashed border-muted rounded-3xl animate-in fade-in zoom-in duration-500">
-          <div className="h-24 w-24 bg-muted/50 rounded-full flex items-center justify-center mb-2">
-            <ImageIcon className="h-12 w-12 text-muted-foreground/30" />
-          </div>
-          <div>
-            <p className="text-xl font-bold text-muted-foreground">Chưa có câu hỏi nào</p>
-            <p className="text-muted-foreground/70 mt-1 max-w-xs mx-auto">Nhấn "Thêm câu hỏi mới" để bắt đầu xây dựng nội dung cho trò chơi Đuổi hình bắt chữ.</p>
-          </div>
-          <Button variant="outline" onClick={() => setShowCreate(true)} className="mt-2 rounded-xl">
-            Bắt đầu tạo ngay
-          </Button>
-        </div>
-      ) : (
-        <div className="space-y-12">
-          {LEVELS.map((levelInfo) => {
-            const list = groupedByLevel[levelInfo.value];
-            if (list.length === 0) return null;
-            return (
-              <div key={levelInfo.value} className="space-y-6">
-                {/* Level Header */}
-                <div className="flex items-center gap-4">
-                  <div className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider border shadow-sm ${levelInfo.color}`}>
-                    {levelInfo.label}
-                  </div>
-                  <div className="h-px bg-gradient-to-r from-muted to-transparent flex-1" />
-                  <span className="text-xs font-bold text-muted-foreground/50">{list.length} CÂU HỎI</span>
+        {/* Right Column: List & Header */}
+        <div className="flex-1 space-y-8 min-w-0 order-1 lg:order-2">
+          {/* Header */}
+          <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
+            <button
+              onClick={() => navigate("/games")}
+              className="flex items-center justify-center h-10 w-10 rounded-xl bg-muted hover:bg-muted/80 transition-all hover:scale-105 active:scale-95 group"
+            >
+              <ArrowLeft className="h-5 w-5 text-muted-foreground group-hover:text-foreground" />
+            </button>
+            <div className="flex-1">
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-500/10 text-blue-600 shadow-sm border border-blue-100">
+                  <ImageIcon className="h-5 w-5" />
                 </div>
-
-                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                  {list.map((q, i) => (
-                    <div
-                      key={q.id}
-                      className="group relative flex flex-col bg-card border-2 border-border rounded-3xl overflow-hidden shadow-sm transition-all duration-300 hover:shadow-xl hover:border-primary/20 hover:-translate-y-1"
-                      style={{ animationDelay: `${i * 50}ms` }}
-                    >
-                      {/* Image Area */}
-                      <div className="relative h-48 bg-muted/30 overflow-hidden flex items-center justify-center p-4">
-                        <img
-                          src={getAssetUrl(q.image_url)}
-                          alt={q.answer}
-                          className="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-500"
-                        />
-                        <div className="absolute top-3 left-3 bg-white/90 backdrop-blur shadow-sm px-2.5 py-1 rounded-lg text-[10px] font-bold text-gray-500 uppercase">
-                          No. {i + 1}
-                        </div>
-                      </div>
-
-                      {/* Content Area */}
-                      <div className="p-5 flex-1 flex flex-col justify-between gap-4">
-                        <div>
-                          <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Đáp án</div>
-                          <div className="font-heading text-lg font-black text-foreground tracking-widest uppercase truncate bg-muted/40 px-3 py-2 rounded-xl border border-border/10">
-                            {q.answer}
-                          </div>
-                        </div>
-
-                        <div className="flex items-center justify-between mt-auto pt-4 border-t border-border/50">
-                          <div className="flex flex-col">
-                            <span className="text-[10px] text-muted-foreground font-medium">Người tạo</span>
-                            <span className="text-xs font-bold">{q.authorName || "Hệ thống"}</span>
-                          </div>
-                          <div className="flex gap-1.5">
-                            <Button
-                              variant="ghost" 
-                              size="icon" 
-                              className="h-9 w-9 rounded-xl bg-muted/50 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-                              onClick={() => setEditTarget(q)}
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost" 
-                              size="icon" 
-                              className="h-9 w-9 rounded-xl bg-muted/50 hover:bg-red-50 hover:text-red-600 transition-colors text-muted-foreground"
-                              onClick={() => handleDelete(q.id)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                <div>
+                  <h1 className="font-heading text-2xl font-bold tracking-tight">
+                    Đuổi hình bắt chữ
+                  </h1>
+                  <p className="text-muted-foreground text-[11px] font-medium flex items-center gap-2 mt-0.5">
+                    Quản lý kho câu hỏi hình ảnh · <span className="font-bold text-primary">{questions.length}</span> câu hỏi
+                  </p>
                 </div>
               </div>
-            );
-          })}
+            </div>
+            <Button 
+              onClick={() => setShowCreate(true)} 
+              className="rounded-full h-10 px-7 font-bold bg-emerald-500 text-white hover:bg-emerald-600 transition-all active:scale-95 shadow-lg shadow-emerald-500/20"
+            >
+              <Plus className="h-4 w-4 mr-2" /> Tạo mới
+            </Button>
+          </div>
+
+          {/* Filter Bar */}
+          {!loading && questions.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2 pb-4 border-b border-border/30">
+              <button
+                onClick={() => setFilterLevel("all")}
+                className={`px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border transition-all
+                  ${filterLevel === "all" 
+                    ? "bg-emerald-500 text-white border-emerald-500 shadow-md shadow-emerald-500/20" 
+                    : "bg-muted/40 text-muted-foreground border-transparent hover:bg-muted"}`}
+              >
+                Tất cả
+              </button>
+              {LEVELS.map((lv) => (
+                <button
+                  key={lv.value}
+                  onClick={() => setFilterLevel(lv.value)}
+                  className={`px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border transition-all
+                    ${filterLevel === lv.value 
+                      ? "bg-emerald-500 text-white border-emerald-500 shadow-md shadow-emerald-500/20 scale-105" 
+                      : "bg-muted/40 text-muted-foreground border-transparent hover:bg-muted"}`}
+                >
+                  {lv.label}
+                </button>
+              ))}
+              <div className="ml-auto text-[10px] font-black text-muted-foreground/40 uppercase tracking-[0.15em]">
+                {filterLevel === "all" 
+                  ? questions.length 
+                  : questions.filter(q => q.level === filterLevel).length} CÂU HỎI
+              </div>
+            </div>
+          )}
+
+          {/* Main List */}
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-32 space-y-4">
+              <Loader2 className="h-10 w-10 animate-spin text-primary" />
+              <p className="text-muted-foreground font-medium animate-pulse text-sm">Đang tải dữ liệu...</p>
+            </div>
+          ) : questions.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-24 text-center gap-4 border-4 border-dashed border-muted/50 rounded-[3rem] animate-in fade-in zoom-in duration-500">
+              <div className="h-20 w-20 bg-muted/30 rounded-full flex items-center justify-center mb-2">
+                <ImageIcon className="h-10 w-10 text-muted-foreground/20" />
+              </div>
+              <p className="text-lg font-bold text-muted-foreground">Chưa có câu hỏi nào</p>
+              <Button onClick={() => setShowCreate(true)} className="rounded-xl px-8">Bắt đầu tạo ngay</Button>
+            </div>
+          ) : (
+            <div className="space-y-10">
+              {LEVELS.filter(lv => filterLevel === "all" || filterLevel === lv.value).map((levelInfo) => {
+                const list = groupedByLevel[levelInfo.value];
+                if (list.length === 0) return null;
+                return (
+                  <div key={levelInfo.value} className="space-y-6">
+                    <div className="flex items-center gap-4">
+                      <div className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border shadow-sm ${levelInfo.color}`}>
+                        {levelInfo.label}
+                      </div>
+                      <div className="h-px bg-gradient-to-r from-muted/50 to-transparent flex-1" />
+                    </div>
+
+                    <div className="grid gap-6 sm:grid-cols-2">
+                      {list.map((q, i) => (
+                        <div
+                          key={q.id}
+                          className="group relative flex flex-col bg-card border-2 border-border/40 rounded-[2.5rem] overflow-hidden shadow-sm transition-all duration-300 hover:shadow-xl hover:border-primary/10 hover:-translate-y-1"
+                        >
+                          <div className="relative h-48 bg-muted/10 overflow-hidden flex items-center justify-center p-6">
+                            <img
+                              src={getAssetUrl(q.image_url)}
+                              alt={q.answer}
+                              className="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-700"
+                            />
+                            <div className="absolute top-4 left-4 bg-white/80 backdrop-blur shadow-sm px-2.5 py-1 rounded-xl text-[9px] font-black text-gray-400 uppercase tracking-tight border border-border/10">
+                              NO. {i + 1}
+                            </div>
+                          </div>
+
+                          <div className="p-6 flex-1 flex flex-col gap-6">
+                            <div className="space-y-2">
+                              <div className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/50">Đáp án</div>
+                              <div className="font-heading text-lg font-black text-foreground tracking-[0.15em] uppercase truncate bg-muted/20 px-4 py-3 rounded-2xl border border-border/5 shadow-inner">
+                                {q.answer}
+                              </div>
+                            </div>
+
+                            <div className="flex items-center justify-between pt-5 border-t border-border/30 mt-auto">
+                              <div className="flex flex-col">
+                                <span className="text-[8px] text-muted-foreground/60 font-black uppercase tracking-widest">Người tạo</span>
+                                <span className="text-xs font-bold text-slate-500">{q.authorName || "Hệ thống"}</span>
+                              </div>
+                              <div className="flex gap-2">
+                                <Button
+                                  variant="ghost" 
+                                  size="icon" 
+                                  className="h-9 w-9 rounded-xl bg-muted/20 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                                  onClick={() => setEditTarget(q)}
+                                >
+                                  <Pencil className="h-3.5 w-3.5" />
+                                </Button>
+                                <Button
+                                  variant="ghost" 
+                                  size="icon" 
+                                  className="h-9 w-9 rounded-xl bg-muted/20 hover:bg-red-50 hover:text-red-600 transition-colors text-muted-foreground"
+                                  onClick={() => handleDelete(q.id)}
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
-      )}
+      </div>
 
       {/* Modals */}
       {showCreate && (

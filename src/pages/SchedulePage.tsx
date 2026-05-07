@@ -1140,31 +1140,31 @@ function TasksTab({ userId }: { userId: string }) {
             const isCollapsed = collapsedMonths[group.key];
             return (
               <div key={group.key} className="space-y-3">
-                {/* Month header */}
-                <div className="space-y-2">
+                {/* Month header highlighted with a more prominent blue/slate background */}
+                <div className="space-y-3 bg-slate-100/80 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-300/40 dark:border-slate-700/40 shadow-sm transition-all duration-300">
                   <button 
                     onClick={() => toggleMonth(group.key)}
                     className="flex w-full items-center gap-3 group/header"
                   >
-                    <span className="text-xs font-bold uppercase tracking-widest text-primary group-hover/header:opacity-80 transition-opacity">
+                    <span className="text-xs font-black uppercase tracking-widest text-slate-700 dark:text-slate-300 group-hover/header:text-blue-600 transition-colors">
                       {group.label}
                     </span>
-                    <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary group-hover/header:bg-primary/20 transition-colors">
+                    <span className="rounded-full bg-blue-100 dark:bg-blue-900/40 px-2 py-0.5 text-[10px] font-black text-blue-700 dark:text-blue-300 group-hover/header:bg-blue-200 transition-colors">
                       {group.tasks.length}
                     </span>
-                    <div className="flex-1 h-px bg-border" />
-                    <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-300 ${isCollapsed ? "-rotate-90" : ""}`} />
+                    <div className="flex-1 h-px bg-slate-300/60 dark:bg-slate-700/60 group-hover/header:bg-blue-200 transition-colors" />
+                    <ChevronDown className={`h-4 w-4 text-slate-500 transition-transform duration-300 ${isCollapsed ? "-rotate-90" : ""}`} />
                   </button>
                   
                   {/* Monthly Progress Bar */}
-                  <div className="space-y-1.5 px-0.5">
-                    <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-tight text-muted-foreground/70">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-tight text-slate-600/90">
                       <span>Tiến độ tháng</span>
-                      <span className="text-primary">{group.doneCount}/{group.tasks.length} hoàn thành ({Math.round(group.tasks.length ? (group.doneCount/group.tasks.length)*100 : 0)}%)</span>
+                      <span className="text-emerald-600 font-black">{group.doneCount}/{group.tasks.length} hoàn thành ({Math.round(group.tasks.length ? (group.doneCount/group.tasks.length)*100 : 0)}%)</span>
                     </div>
-                    <div className="w-full bg-muted/40 rounded-full h-1.5 overflow-hidden border border-border/50">
+                    <div className="w-full bg-slate-200 dark:bg-slate-900/50 rounded-full h-2 overflow-hidden border border-slate-300/30 dark:border-slate-700/30 shadow-inner">
                       <div
-                        className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full transition-all duration-1000"
+                        className="h-full bg-gradient-to-r from-emerald-500 via-emerald-400 to-teal-400 rounded-full transition-all duration-1000 ease-out shadow-[0_0_8px_rgba(16,185,129,0.3)]"
                         style={{ width: `${group.tasks.length ? (group.doneCount / group.tasks.length) * 100 : 0}%` }}
                       />
                     </div>
