@@ -115,6 +115,14 @@ export default function EditQuizletPage() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const playerRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    const handleFsChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener("fullscreenchange", handleFsChange);
+    return () => document.removeEventListener("fullscreenchange", handleFsChange);
+  }, []);
+
   const displayCards = isShuffled ? shuffledCards : cards;
 
   const handleImport = () => {
@@ -418,103 +426,111 @@ export default function EditQuizletPage() {
         </div>
       </div>
 
-      <div ref={playerRef} className={cn("bg-white rounded-xl shadow-lg border border-gray-100 p-4 mb-10", isFullscreen ? "fixed inset-0 z-50 flex flex-col justify-center bg-white" : "")}>
-        {testMode === 'practice' ? (
-          <div className="w-full rounded-2xl border border-gray-200 overflow-hidden">
-            <div className="flex flex-col items-center justify-center py-8 px-6 sm:px-10 bg-red-50/60 min-h-[180px] border-b border-gray-200">
-              <h2 className="text-center font-bold break-words w-full" style={{ color: frontStyle.color, fontSize: getCardFontSize(currentCard.term, frontStyle.size * 0.75, isFullscreen) }}>{currentCard.term || "Trống"}</h2>
-            </div>
-            <div className="flex flex-col items-center justify-center py-8 px-6 sm:px-10 bg-blue-50/60 min-h-[180px]">
-              <h2 className="text-center font-bold break-words w-full" style={{ color: backStyle.color, fontSize: getCardFontSize(currentCard.definition, backStyle.size * 0.75, isFullscreen) }}>{currentCard.definition || "Trống"}</h2>
-            </div>
-          </div>
-        ) : (
-          <div 
-            className="relative w-full h-[400px] cursor-pointer perspective-1000"
-            onClick={toggleFlip}
-          >
-            <div className={cn("w-full h-full [transform-style:preserve-3d] transition-transform duration-500", isFlipped ? "rotate-y-180" : "")}>
-              <div className="absolute inset-0 bg-gray-100 rounded-2xl flex items-center justify-center p-6 sm:p-10 backface-hidden border border-gray-200">
-                <h2 className="text-center font-bold break-words w-full" style={{ color: frontStyle.color, fontSize: getCardFontSize(currentCard.term, frontStyle.size, isFullscreen) }}>{currentCard.term || "Trống"}</h2>
+      <div ref={playerRef} className={cn(
+        "bg-white rounded-xl shadow-lg border border-gray-100 mb-10 overflow-hidden", 
+        isFullscreen ? "fixed inset-0 z-[100] flex flex-col bg-white rounded-none border-none p-0" : "p-4"
+      )}>
+        <div className={cn("flex-1 flex flex-col items-center justify-center w-full", isFullscreen ? "p-8 sm:p-20" : "")}>
+          {testMode === 'practice' ? (
+            <div className={cn("w-full rounded-2xl border border-gray-200 overflow-hidden flex flex-col", isFullscreen ? "flex-1 max-w-5xl" : "")}>
+              <div className={cn("flex flex-col items-center justify-center py-8 px-6 sm:px-10 bg-red-50/60 border-b border-gray-200", isFullscreen ? "flex-1" : "min-h-[180px]")}>
+                <h2 className="text-center font-bold break-words w-full" style={{ color: frontStyle.color, fontSize: getCardFontSize(currentCard.term, isFullscreen ? frontStyle.size * 1.5 : frontStyle.size * 0.75, isFullscreen) }}>{currentCard.term || "Trống"}</h2>
               </div>
-              <div className="absolute inset-0 bg-gray-100 rounded-2xl flex items-center justify-center p-6 sm:p-10 backface-hidden rotate-y-180 border border-gray-200">
-                <h2 className="text-center font-bold break-words w-full" style={{ color: backStyle.color, fontSize: getCardFontSize(currentCard.definition, backStyle.size, isFullscreen) }}>{currentCard.definition || "Trống"}</h2>
+              <div className={cn("flex flex-col items-center justify-center py-8 px-6 sm:px-10 bg-blue-50/60", isFullscreen ? "flex-1" : "min-h-[180px]")}>
+                <h2 className="text-center font-bold break-words w-full" style={{ color: backStyle.color, fontSize: getCardFontSize(currentCard.definition, isFullscreen ? backStyle.size * 1.5 : backStyle.size * 0.75, isFullscreen) }}>{currentCard.definition || "Trống"}</h2>
               </div>
             </div>
-          </div>
-        )}
-
-        {(testMode === 'front' || testMode === 'back') && (
-          <div className="mt-8 max-w-lg mx-auto flex flex-col sm:flex-row gap-4 items-center">
-            <input 
-              type="text" 
-              className={cn(
-                "flex-1 w-full h-12 border-2 px-6 rounded-xl text-lg font-bold transition-all focus:outline-none focus:ring-4",
-                testResult === 'correct' ? "border-emerald-500 bg-emerald-50/50 text-emerald-700 focus:ring-emerald-500/10" :
-                testResult === 'incorrect' ? "border-red-500 bg-red-50/50 text-red-700 focus:ring-red-500/10" :
-                "border-gray-200 bg-white focus:border-[#2D9B63] focus:ring-[#2D9B63]/10"
-              )}
-              value={testInput} 
-              onChange={(e) => {
-                setTestInput(e.target.value);
-                setTestResult(null);
-              }} 
-              onKeyDown={(e) => e.key === 'Enter' && testInput.trim() && handleTestCheck()} 
-              placeholder="Nhập đáp án..." 
-            />
-            <Button 
-              onClick={handleTestCheck}
-              disabled={!testInput.trim()}
-              className={cn(
-                "h-12 px-10 rounded-xl font-black uppercase tracking-wider transition-all w-full sm:w-auto shadow-lg",
-                testResult === 'correct' 
-                  ? "bg-emerald-500 hover:bg-emerald-600 text-white shadow-emerald-200" 
-                  : testResult === 'incorrect'
-                    ? "bg-red-500 hover:bg-red-600 text-white shadow-red-200"
-                    : "bg-[#2D9B63] hover:bg-[#2D9B63]/90 text-white shadow-[#2D9B63]/20"
-              )}
+          ) : (
+            <div 
+              className={cn("relative w-full cursor-pointer perspective-1000", isFullscreen ? "flex-1 max-w-6xl" : "h-[400px]")}
+              onClick={toggleFlip}
             >
-              {testResult === 'correct' ? (
-                <>
-                  <CheckCircle2 className="mr-2 h-5 w-5" />
-                  Chính xác
-                </>
-              ) : testResult === 'incorrect' ? (
-                <>
-                  <X className="mr-2 h-5 w-5" />
-                  Sai rồi
-                </>
-              ) : (
-                <>
-                  <Check className="mr-2 h-5 w-5" />
-                  Kiểm tra
-                </>
-              )}
-            </Button>
-          </div>
-        )}
+              <div className={cn("w-full h-full [transform-style:preserve-3d] transition-transform duration-500", isFlipped ? "rotate-y-180" : "")}>
+                <div className="absolute inset-0 bg-gray-100 rounded-2xl flex items-center justify-center p-6 sm:p-10 backface-hidden border border-gray-200 shadow-sm">
+                  <h2 className="text-center font-bold break-words w-full" style={{ color: frontStyle.color, fontSize: getCardFontSize(currentCard.term, isFullscreen ? frontStyle.size * 1.5 : frontStyle.size, isFullscreen) }}>{currentCard.term || "Trống"}</h2>
+                </div>
+                <div className="absolute inset-0 bg-gray-100 rounded-2xl flex items-center justify-center p-6 sm:p-10 backface-hidden rotate-y-180 border border-gray-200 shadow-sm">
+                  <h2 className="text-center font-bold break-words w-full" style={{ color: backStyle.color, fontSize: getCardFontSize(currentCard.definition, isFullscreen ? backStyle.size * 1.5 : backStyle.size, isFullscreen) }}>{currentCard.definition || "Trống"}</h2>
+                </div>
+              </div>
+            </div>
+          )}
 
-        <div className="flex items-center justify-between mt-6 px-1 sm:px-4 flex-nowrap gap-0">
+          {(testMode === 'front' || testMode === 'back') && (
+            <div className={cn("mt-8 w-full max-w-lg mx-auto flex flex-col sm:flex-row gap-4 items-center", isFullscreen && "mb-10")}>
+              <input 
+                type="text" 
+                className={cn(
+                  "flex-1 w-full h-12 border-2 px-6 rounded-xl text-lg font-bold transition-all focus:outline-none focus:ring-4",
+                  testResult === 'correct' ? "border-emerald-500 bg-emerald-50/50 text-emerald-700 focus:ring-emerald-500/10" :
+                  testResult === 'incorrect' ? "border-red-500 bg-red-50/50 text-red-700 focus:ring-red-500/10" :
+                  "border-gray-200 bg-white focus:border-[#2D9B63] focus:ring-[#2D9B63]/10"
+                )}
+                value={testInput} 
+                onChange={(e) => {
+                  setTestInput(e.target.value);
+                  setTestResult(null);
+                }} 
+                onKeyDown={(e) => e.key === 'Enter' && testInput.trim() && handleTestCheck()} 
+                placeholder="Nhập đáp án..." 
+              />
+              <Button 
+                onClick={handleTestCheck}
+                disabled={!testInput.trim()}
+                className={cn(
+                  "h-12 px-10 rounded-xl font-black uppercase tracking-wider transition-all w-full sm:w-auto shadow-lg",
+                  testResult === 'correct' 
+                    ? "bg-emerald-500 hover:bg-emerald-600 text-white shadow-emerald-200" 
+                    : testResult === 'incorrect'
+                      ? "bg-red-500 hover:bg-red-600 text-white shadow-red-200"
+                      : "bg-[#2D9B63] hover:bg-[#2D9B63]/90 text-white shadow-[#2D9B63]/20"
+                )}
+              >
+                {testResult === 'correct' ? (
+                  <>
+                    <CheckCircle2 className="mr-2 h-5 w-5" />
+                    Chính xác
+                  </>
+                ) : testResult === 'incorrect' ? (
+                  <>
+                    <X className="mr-2 h-5 w-5" />
+                    Sai rồi
+                  </>
+                ) : (
+                  <>
+                    <Check className="mr-2 h-5 w-5" />
+                    Kiểm tra
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
+        </div>
+
+        <div className={cn(
+          "flex items-center justify-between px-4 sm:px-10 shrink-0 transition-all",
+          isFullscreen ? "h-20 bg-gray-50/90 border-t border-gray-200" : "mt-6 mb-2"
+        )}>
           <div className="flex gap-0 sm:gap-2 shrink-0 flex-nowrap">
-            <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-10 sm:w-10" onClick={() => setIsAutoPlaying(!isAutoPlaying)}>{isAutoPlaying ? <Pause className="h-4 w-4 sm:h-5 sm:h-5" /> : <Play className="h-4 w-4 sm:h-5 sm:h-5" />}</Button>
-            <Button variant="ghost" size="icon" className={cn("h-8 w-8 sm:h-10 sm:w-10", isShuffled ? "text-primary" : "")} onClick={toggleShuffle}><Shuffle className="h-4 w-4 sm:h-5 sm:h-5" /></Button>
+            <Button variant="ghost" size="icon" className="h-10 w-10" onClick={() => setIsAutoPlaying(!isAutoPlaying)}>{isAutoPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}</Button>
+            <Button variant="ghost" size="icon" className={cn("h-10 w-10", isShuffled ? "text-primary" : "")} onClick={toggleShuffle}><Shuffle className="h-5 w-5" /></Button>
           </div>
-          <div className="flex items-center gap-0.5 sm:gap-4 shrink-0 flex-nowrap mx-auto">
-            <Button variant="ghost" size="icon" className="h-9 w-9 sm:h-10 sm:w-10" onClick={handlePrev} disabled={currentIndex === 0}><ChevronLeft className="h-5 w-5 sm:h-6 sm:h-6" /></Button>
-            <span className="font-bold text-[12px] sm:text-base px-1 whitespace-nowrap shrink-0 tabular-nums leading-none min-w-[50px] sm:min-w-[80px] text-center">
+          <div className="flex items-center gap-1 sm:gap-4 shrink-0 flex-nowrap mx-auto">
+            <Button variant="ghost" size="icon" className="h-10 w-10" onClick={handlePrev} disabled={currentIndex === 0}><ChevronLeft className="h-6 w-6" /></Button>
+            <span className="font-bold text-sm sm:text-lg px-2 whitespace-nowrap shrink-0 tabular-nums leading-none min-w-[60px] sm:min-w-[100px] text-center">
               {currentIndex + 1} / {displayCards.length}
             </span>
-            <Button variant="ghost" size="icon" className="h-9 w-9 sm:h-10 sm:w-10" onClick={handleNext} disabled={currentIndex === displayCards.length - 1}><ChevronRight className="h-5 w-5 sm:h-6 sm:h-6" /></Button>
+            <Button variant="ghost" size="icon" className="h-10 w-10" onClick={handleNext} disabled={currentIndex === displayCards.length - 1}><ChevronRight className="h-6 w-6" /></Button>
           </div>
           <div className="flex gap-0 sm:gap-2 shrink-0 flex-nowrap">
-            <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-10 sm:w-10" onClick={() => {
+            <Button variant="ghost" size="icon" className="h-10 w-10" onClick={() => {
               setTempFrontStyle(frontStyle);
               setTempBackStyle(backStyle);
               setIsSettingsOpen(true);
             }}>
-              <Settings className="h-4 w-4 sm:h-5 sm:h-5" />
+              <Settings className="h-5 w-5" />
             </Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-10 sm:w-10" onClick={toggleFullScreen}>{isFullscreen ? <Minimize2 className="h-4 w-4 sm:h-5 sm:h-5" /> : <Maximize2 className="h-4 w-4 sm:h-5 sm:h-5" />}</Button>
+            <Button variant="ghost" size="icon" className="h-10 w-10" onClick={toggleFullScreen}>{isFullscreen ? <Minimize2 className="h-5 w-5" /> : <Maximize2 className="h-5 w-5" />}</Button>
           </div>
         </div>
       </div>
