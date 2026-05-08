@@ -8,6 +8,8 @@ import crypto from "node:crypto";
 import nodemailer from "nodemailer";
 import dns from "node:dns";
 import { query, pool } from "./db.mjs";
+import { logger } from "./logger.mjs";
+
 
 // Ép buộc ưu tiên IPv4 để sửa lỗi ENETUNREACH trên Railway (IPv6 không hỗ trợ)
 dns.setDefaultResultOrder("ipv4first");
@@ -72,7 +74,12 @@ app.use(`${API_PREFIX}`, (req, res, next) => {
     if (providedKey !== expectedKey) {
       const maskedExpected = expectedKey.substring(0, 4) + "...";
       const maskedProvided = providedKey ? providedKey.substring(0, 4) + "..." : "NONE";
-      console.warn(`[Security] API Key mismatch for ${req.method} ${req.path}. Expected: ${maskedExpected}, Provided: ${maskedProvided}.`);
+      logger.warn(`API Key mismatch`, { 
+        url: req.originalUrl, 
+        method: req.method,
+        providedKey: maskedProvided,
+        expectedKey: maskedExpected
+      });
 
       return res.status(403).json({ error: "API Key không hợp lệ" });
     }
@@ -294,8 +301,7 @@ app.use(async (req, res, next) => {
       return res.status(401).json({ error: "TOKEN_EXPIRED" });
     }
   } catch (err) {
-    console.error("Session verification error:", err);
-    try { await fs.appendFile(path.join(projectRoot, "server_error.log"), `[${new Date().toISOString()}] Session verification error: ${err.message}\n${err.stack}\n`); } catch (e) { }
+    logger.error("Session verification error", err, { url: req.originalUrl, userId });
     return res.status(500).json({ error: "Lỗi xác thực phiên làm việc.", details: err.message });
   }
   next();
@@ -472,10 +478,12 @@ app.post(`${API_PREFIX}/register`, async (req, res) => {
     const newUser = rows[0];
     const { accessToken, refreshToken, accessTokenExpiresAt } = await generateTokens(newUser.id);
 
+    logger.info(`New user registered: ${newUser.username}`, { userId: newUser.id, email: newUser.email });
+
     // Gửi email xác nhận đăng ký thành công
     if (newUser && newUser.email) {
       sendRegistrationEmail(newUser.email, newUser.displayName).catch(err => {
-        console.error("Gửi email đăng ký thất bại:", err);
+        logger.error("Gửi email đăng ký thất bại", err, { email: newUser.email });
       });
     }
 
@@ -484,7 +492,7 @@ app.post(`${API_PREFIX}/register`, async (req, res) => {
     if (err.message.includes("unique constraint")) {
       return res.status(400).json({ error: "Tên đăng nhập hoặc email đã được sử dụng" });
     }
-    console.error("Register Error:", err);
+    logger.error("Register Error", err);
     res.status(500).json({ error: "Đăng ký thất bại, vui lòng thử lại sau" });
   }
 });
@@ -513,9 +521,10 @@ app.post(`${API_PREFIX}/login`, async (req, res) => {
     const { accessToken, refreshToken, accessTokenExpiresAt } = await generateTokens(user.id);
 
     const { password_hash: _, ...safeUser } = user;
+    logger.info(`User logged in: ${user.username}`, { userId: user.id });
     res.json({ ...safeUser, sessionToken: accessToken, refreshToken, accessTokenExpiresAt });
   } catch (err) {
-    console.error("Login Error:", err);
+    logger.error("Login Error", err);
     res.status(500).json({ error: "Đăng nhập thất bại, vui lòng thử lại sau" });
   }
 });
@@ -682,10 +691,8 @@ app.get(`${API_PREFIX}/statistics/users`, async (req, res) => {
       ORDER BY u.created_at DESC
     `);
 
-    res.json(rows);
   } catch (err) {
-    console.error("GET /statistics/users Error:", err);
-    try { await fs.appendFile(path.join(projectRoot, "server_error.log"), `[${new Date().toISOString()}] GET /statistics/users Error: ${err.message}\n${err.stack}\n`); } catch (e) { }
+    logger.error("GET /statistics/users Error", err);
     res.status(500).json({ error: "Lấy thống kê người dùng thất bại, vui lòng thử lại sau", details: err.message });
   }
 });
@@ -742,7 +749,7 @@ app.get(`${API_PREFIX}/statistics/monthly-summary`, async (req, res) => {
     };
     res.json(result);
   } catch (err) {
-    console.error("GET /statistics/monthly-summary Error:", err);
+    logger.error("GET /statistics/monthly-summary Error", err);
     res.status(500).json({ error: "Lấy thống kê hàng tháng thất bại, vui lòng thử lại sau", details: err.message });
   }
 });
@@ -824,8 +831,7 @@ app.get(`${API_PREFIX}/users`, async (req, res) => {
       stats
     });
   } catch (err) {
-    console.error("GET /users Error:", err);
-    try { await fs.appendFile(path.join(projectRoot, "server_error.log"), `[${new Date().toISOString()}] GET /users Error: ${err.message}\n${err.stack}\n`); } catch (e) { }
+    logger.error("GET /users Error", err);
     res.status(500).json({ error: "Lấy danh sách người dùng thất bại, vui lòng thử lại sau", details: err.message });
   }
 });
@@ -877,10 +883,8 @@ app.post(`${API_PREFIX}/users`, async (req, res) => {
       });
     }
 
-    res.status(201).json(newUser);
   } catch (err) {
-    console.error("POST /users Error:", err.message);
-    try { await fs.appendFile(path.join(projectRoot, "server_error.log"), `[${new Date().toISOString()}] POST /users Error: ${err.message}\n${err.stack}\n`); } catch (e) { }
+    logger.error("POST /users Error", err);
     if (err.message?.includes("unique constraint") || err.message?.includes("duplicate key")) {
       return res.status(400).json({ error: "Tên đăng nhập hoặc email đã được sử dụng" });
     }
@@ -965,8 +969,7 @@ app.get(`${API_PREFIX}/plans`, async (req, res) => {
     );
     res.json(rows);
   } catch (err) {
-    console.error("GET /plans error:", err);
-    try { await fs.appendFile(path.join(projectRoot, "server_error.log"), `[${new Date().toISOString()}] GET /plans Error: ${err.message}\n${err.stack}\n`); } catch (e) { }
+    logger.error("GET /plans error", err);
     res.status(500).json({ error: "Không thể tải danh sách gói cước: " + err.message });
   }
 });
@@ -1128,8 +1131,7 @@ app.get(`${API_PREFIX}/user-subjects`, async (req, res) => {
     );
     res.json(rows);
   } catch (err) {
-    console.error("GET /user-subjects Error:", err.message);
-    try { await fs.appendFile(path.join(projectRoot, "server_error.log"), `[${new Date().toISOString()}] GET /user-subjects Error: ${err.message}\n${err.stack}\n`); } catch (e) { }
+    logger.error("GET /user-subjects Error", err);
     res.status(500).json({ error: "Lấy danh sách môn học cá nhân thất bại, vui lòng thử lại sau", details: err.message });
   }
 });
@@ -1560,8 +1562,7 @@ app.get(`${API_PREFIX}/curricula`, async (req, res) => {
 
     res.json(rows);
   } catch (err) {
-    console.error("GET /curricula Error:", err.message);
-    try { await fs.appendFile(path.join(projectRoot, "server_error.log"), `[${new Date().toISOString()}] GET /curricula Error: ${err.message}\n${err.stack}\n`); } catch (e) { }
+    logger.error("GET /curricula Error", err);
     res.status(500).json({ error: "Lấy danh sách chương trình học thất bại, vui lòng thử lại sau", details: err.message });
   }
 });
@@ -3683,8 +3684,12 @@ async function initializeApp() {
 
 // ── Global Express Error Handler ───────────────────────────────────────────
 app.use(async (err, req, res, next) => {
-  console.error("[Unhandled Express Error]", err.stack || err.message);
-  try { await fs.appendFile(path.join(projectRoot, "server_error.log"), `[${new Date().toISOString()}] Unhandled Express Error: ${err.message}\n${err.stack}\n`); } catch (e) { }
+  logger.error(`Unhandled Express Error: ${req.method} ${req.originalUrl}`, err, {
+    url: req.originalUrl,
+    method: req.method,
+    headers: req.headers,
+    body: req.body
+  });
   if (res.headersSent) return next(err);
   res.status(500).json({ error: "Đã xảy ra lỗi máy chủ. Vui lòng thử lại.", details: err.message });
 });

@@ -591,22 +591,30 @@ function TimetableTab({ userId }: { userId: string }) {
 
               return (
                 <div className="flex items-start justify-between gap-2 px-3 py-2 sm:py-2.5 group hover:bg-muted/20 transition-colors border-b border-border/50 last:border-0">
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-2 min-w-0 flex-1">
+                  <div className="grid grid-cols-3 items-center gap-3 min-w-0 flex-1">
+                    {/* 1. Môn học (Căn lề trái) */}
                     <div 
-                      className={`rounded-lg px-2 py-0.5 text-xs font-bold border self-start sm:shrink-0 max-w-full truncate ${entry.color}`}
+                      className={`rounded-lg px-2 py-0.5 text-[10px] sm:text-xs font-bold border truncate ${entry.color} max-w-full`}
                       title={entry.subject}
                     >
                       {entry.subject}
                     </div>
-                    <div className="flex items-center gap-1 text-[10px] sm:text-xs text-muted-foreground">
-                      <Clock className="h-2.5 w-2.5 sm:h-3 sm:w-3 shrink-0" />
-                      <span className="whitespace-nowrap">{entry.startTime} – {entry.endTime}</span>
+
+                    {/* 2. Thời gian (Căn giữa) */}
+                    <div className="flex items-center justify-center gap-1 text-[10px] sm:text-xs text-muted-foreground whitespace-nowrap">
+                      <Clock className="h-3 w-3 shrink-0" />
+                      <span>{entry.startTime} – {entry.endTime}</span>
                     </div>
-                    {entry.room && (
-                      <div className="text-[10px] sm:text-xs text-muted-foreground/60 flex items-center gap-1 truncate">
-                        <BookOpen className="h-3 w-3 shrink-0" /> {entry.room}
-                      </div>
-                    )}
+
+                    {/* 3. Phòng học (Căn lề phải) */}
+                    <div className="flex items-center justify-end gap-1 text-[10px] sm:text-xs text-muted-foreground/60 min-w-0">
+                      {entry.room && (
+                        <>
+                          <BookOpen className="h-3 w-3 shrink-0" />
+                          <span className="truncate">{entry.room}</span>
+                        </>
+                      )}
+                    </div>
                   </div>
 
                   {/* ⋮ Dropdown trigger */}
@@ -858,6 +866,9 @@ function TasksTab({ userId }: { userId: string }) {
   const [openTaskMenuId, setOpenTaskMenuId] = useState<string | null>(null);
   const [taskMenuPos, setTaskMenuPos] = useState<{ top: number; right: number } | null>(null);
 
+  const [isAddCalendarOpen, setIsAddCalendarOpen] = useState(false);
+  const [isEditCalendarOpen, setIsEditCalendarOpen] = useState(false);
+
   // Close task dropdown on outside click or scroll
   useEffect(() => {
     const close = () => setOpenTaskMenuId(null);
@@ -1055,7 +1066,7 @@ function TasksTab({ userId }: { userId: string }) {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Hạn chót</label>
-                <Popover>
+                <Popover open={isAddCalendarOpen} onOpenChange={setIsAddCalendarOpen}>
                   <PopoverTrigger asChild>
                     <button
                       type="button"
@@ -1071,7 +1082,10 @@ function TasksTab({ userId }: { userId: string }) {
                     <Calendar
                       mode="single"
                       selected={form.dueDate ? parseISO(form.dueDate) : undefined}
-                      onSelect={(date) => setForm(f => ({ ...f, dueDate: date ? format(date, "yyyy-MM-dd") : "" }))}
+                      onSelect={(date) => {
+                        setForm(f => ({ ...f, dueDate: date ? format(date, "yyyy-MM-dd") : "" }));
+                        setIsAddCalendarOpen(false);
+                      }}
                       initialFocus
                     />
                   </PopoverContent>
@@ -1270,9 +1284,9 @@ function TasksTab({ userId }: { userId: string }) {
                             </div>
                           )}
 
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <p className={`font-bold text-sm ${task.completed ? "line-through text-muted-foreground" : ""}`}>
+                          <div className="flex-1 min-w-0 pr-10">
+                            <div className="flex items-center gap-2">
+                              <p className={`font-bold text-sm line-clamp-1 flex-1 ${task.completed ? "line-through text-muted-foreground" : ""}`}>
                                 {task.title}
                               </p>
                               <span className={`shrink-0 rounded-md border px-1.5 py-0.5 text-[10px] font-bold ${PRIORITY_CONFIG[task.priority].cls}`}>
@@ -1280,7 +1294,7 @@ function TasksTab({ userId }: { userId: string }) {
                               </span>
                             </div>
                             {task.description && (
-                              <p className="text-xs text-muted-foreground mt-1 whitespace-pre-wrap">{task.description}</p>
+                              <p className="text-xs text-muted-foreground mt-1 whitespace-pre-wrap line-clamp-3">{task.description}</p>
                             )}
                             <div className="flex items-center gap-3 mt-2">
                               {task.createdAt && (
@@ -1341,7 +1355,7 @@ function TasksTab({ userId }: { userId: string }) {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Hạn chót</label>
-                    <Popover>
+                    <Popover open={isEditCalendarOpen} onOpenChange={setIsEditCalendarOpen}>
                       <PopoverTrigger asChild>
                         <button
                           type="button"
@@ -1353,11 +1367,14 @@ function TasksTab({ userId }: { userId: string }) {
                           </span>
                         </button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
+                      <PopoverContent className="w-auto p-0 z-[1100]" align="start">
                         <Calendar
                           mode="single"
                           selected={editForm.dueDate ? parseISO(editForm.dueDate) : undefined}
-                          onSelect={(date) => setEditForm(f => ({ ...f, dueDate: date ? format(date, "yyyy-MM-dd") : "" }))}
+                          onSelect={(date) => {
+                            setEditForm(f => ({ ...f, dueDate: date ? format(date, "yyyy-MM-dd") : "" }));
+                            setIsEditCalendarOpen(false);
+                          }}
                           initialFocus
                         />
                       </PopoverContent>
