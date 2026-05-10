@@ -69,8 +69,21 @@ export default function QuizletPage() {
     return q.title.toLowerCase().includes(searchQuery.toLowerCase());
   });
 
+  const getGradeNum = (gradeStr?: string | null) => {
+    if (!gradeStr) return 9999;
+    const match = gradeStr.match(/\d+/);
+    return match ? parseInt(match[0], 10) : 9999;
+  };
+
+  const sortedAndFilteredQuizlets = [...filteredQuizlets].sort((a, b) => {
+    const numA = getGradeNum(a.grade);
+    const numB = getGradeNum(b.grade);
+    if (numA !== numB) return numA - numB;
+    return new Date(b.created_at || "").getTime() - new Date(a.created_at || "").getTime();
+  });
+
   // 1. Group by Education Level
-  const nestedGroups = filteredQuizlets.reduce((acc, q) => {
+  const nestedGroups = sortedAndFilteredQuizlets.reduce((acc, q) => {
     // Standardize level names for grouping to avoid duplicate sections with different casing
     const level = q.education_level?.trim() || "Chưa phân loại";
     const subject = q.subject_name || "Chưa phân loại môn học";
@@ -201,11 +214,7 @@ export default function QuizletPage() {
                             
                             <div className="space-y-1 flex-1 text-left">
                                 <h3 className="font-heading text-base font-semibold line-clamp-2 group-hover:text-primary transition-colors leading-tight min-h-[2.5rem]">{quizlet.title}</h3>
-                                {viewMode === "community" && quizlet.user_id === currentUser?.id && (
-                                  <div className="flex">
-                                    <Badge variant="secondary" className="bg-primary/5 text-primary border-primary/10 text-[10px] h-5 py-0 px-2 font-black uppercase tracking-wider">Của bạn</Badge>
-                                  </div>
-                                )}
+
                             </div>
                             
                             {/* Visibility Indicator & Action Menu */}
@@ -245,6 +254,9 @@ export default function QuizletPage() {
                           <div className="mt-4">
                             <div className="mt-2 flex items-center justify-between gap-2 text-sm text-muted-foreground border-t border-gray-50 pt-3">
                               <div className="flex items-center gap-2">
+                                {quizlet.grade && (
+                                  <span className="text-[10px] font-bold uppercase tracking-wider bg-primary/10 text-primary px-2 py-0.5 rounded-full border border-primary/15">Lớp {quizlet.grade}</span>
+                                )}
                                 <span className="text-primary font-bold">{quizlet.term_count || 0}</span>
                                 <span className="text-[11px] uppercase tracking-wider font-semibold opacity-70">thuật ngữ</span>
                               </div>

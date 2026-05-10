@@ -77,8 +77,21 @@ export default function QuizListPage() {
     return e.title.toLowerCase().includes(searchQuery.toLowerCase());
   });
 
+  const getGradeNum = (gradeStr?: string | null) => {
+    if (!gradeStr) return 9999;
+    const match = gradeStr.match(/\d+/);
+    return match ? parseInt(match[0], 10) : 9999;
+  };
+
+  const sortedAndFilteredExams = [...filteredExams].sort((a, b) => {
+    const numA = getGradeNum(a.grade);
+    const numB = getGradeNum(b.grade);
+    if (numA !== numB) return numA - numB;
+    return new Date(b.created_at || "").getTime() - new Date(a.created_at || "").getTime();
+  });
+
   // Grouping logic (Education Level -> Subject)
-  const nestedGroups = filteredExams.reduce((acc, exam) => {
+  const nestedGroups = sortedAndFilteredExams.reduce((acc, exam) => {
     const level = exam.education_level?.trim() || "Chưa phân loại";
     const subject = exam.subject_name || "Chưa phân loại môn học";
     
@@ -209,9 +222,6 @@ export default function QuizListPage() {
                               </div>
                               <div className="space-y-1">
                                 <h3 className="font-heading text-xl font-bold line-clamp-2 leading-tight">{exam.title}</h3>
-                                {viewMode === "community" && exam.user_id === user?.id && (
-                                  <Badge variant="secondary" className="bg-primary/5 text-primary border-primary/10 text-[10px] h-5 py-0 px-2 font-black uppercase tracking-wider">Của bạn</Badge>
-                                )}
                               </div>
                             </div>
                             
@@ -250,18 +260,29 @@ export default function QuizListPage() {
                           </div>
                           
                           <div className="flex-1 flex flex-col">
-                            {exam.description && (
-                              <p className="text-sm text-muted-foreground line-clamp-2 mb-2">{exam.description}</p>
-                            )}
+                            <div className="flex-1">
+                              {exam.description && (
+                                <p className="text-sm text-muted-foreground line-clamp-2 mb-2">{exam.description}</p>
+                              )}
+                            </div>
 
-                            {exam.average_score !== null && exam.average_score !== undefined && (
-                              <div className="mt-2 inline-flex items-center gap-2 bg-amber-50 text-amber-700 px-3 py-1.5 rounded-xl text-[11px] font-black uppercase tracking-wider ring-1 ring-amber-500/20 shadow-sm animate-fade-in mb-4">
-                                <Trophy className="h-3.5 w-3.5 text-amber-500" />
-                                <span>Điểm trung bình: {Math.round(Number(exam.average_score))}%</span>
+                            {(exam.grade || (exam.average_score !== null && exam.average_score !== undefined)) && (
+                              <div className="flex flex-wrap items-center gap-2 mb-4">
+                                {exam.grade && (
+                                  <div className="inline-flex items-center text-primary bg-primary/10 px-3 py-1.5 rounded-xl text-[11px] font-black uppercase tracking-wider ring-1 ring-primary/20 shadow-sm animate-fade-in">
+                                    <span>Lớp: {exam.grade}</span>
+                                  </div>
+                                )}
+                                {exam.average_score !== null && exam.average_score !== undefined && (
+                                  <div className="inline-flex items-center gap-2 bg-amber-50 text-amber-700 px-3 py-1.5 rounded-xl text-[11px] font-black uppercase tracking-wider ring-1 ring-amber-500/20 shadow-sm animate-fade-in">
+                                    <Trophy className="h-3.5 w-3.5 text-amber-500" />
+                                    <span>Điểm trung bình: {Math.round(Number(exam.average_score))}%</span>
+                                  </div>
+                                )}
                               </div>
                             )}
                             
-                            <div className="mt-auto flex items-center justify-between gap-2 text-sm text-muted-foreground border-t border-gray-50 pt-3">
+                            <div className="flex items-center justify-between gap-2 text-sm text-muted-foreground border-t border-gray-50 pt-3">
                               <div className="flex items-center gap-3">
                                 <div className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60">
                                   <ClipboardList className="h-3 w-3" />

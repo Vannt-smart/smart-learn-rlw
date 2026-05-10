@@ -2081,7 +2081,7 @@ app.get(`${API_PREFIX}/quizlets`, async (req, res) => {
          left join users u on q.user_id = u.id
          left join subjects s on q.subject_id = s.id
          where q.user_id = $1::uuid
-         order by s.name asc, q.created_at desc`,
+         order by NULLIF(regexp_replace(q.grade, '\\D', '', 'g'), '')::int asc nulls last, q.grade asc nulls last, s.name asc, q.created_at desc`,
         [userId]
       );
       rows = result.rows;
@@ -2094,7 +2094,7 @@ app.get(`${API_PREFIX}/quizlets`, async (req, res) => {
          left join users u on q.user_id = u.id
          left join subjects s on q.subject_id = s.id
          where q.is_public = true ${isAdmin ? "" : "and q.education_level = cast($1 as text)"}
-         order by s.name asc, q.created_at desc`;
+         order by NULLIF(regexp_replace(q.grade, '\\D', '', 'g'), '')::int asc nulls last, q.grade asc nulls last, s.name asc, q.created_at desc`;
 
       const result = await query(sql, isAdmin ? [] : [userLevelStr]);
       rows = result.rows;
@@ -2108,7 +2108,7 @@ app.get(`${API_PREFIX}/quizlets`, async (req, res) => {
          left join users u on q.user_id = u.id
          left join subjects s on q.subject_id = s.id
          where (cast($2 as boolean) = true or q.user_id = cast($1 as uuid) or q.is_public = true)
-         order by s.name asc, q.created_at desc`,
+         order by NULLIF(regexp_replace(q.grade, '\\D', '', 'g'), '')::int asc nulls last, q.grade asc nulls last, s.name asc, q.created_at desc`,
         [userId, isAdmin]
       );
       rows = result.rows;
@@ -2251,7 +2251,7 @@ app.get(`${API_PREFIX}/exams`, async (req, res) => {
          left join users u on e.user_id = u.id
          left join subjects s on e.subject_id = s.id
          where e.user_id = $1::uuid and e.is_repository = false
-         order by e.created_at desc`,
+         order by NULLIF(regexp_replace(e.grade, '\\D', '', 'g'), '')::int asc nulls last, e.grade asc nulls last, e.created_at desc`,
         [userId]
       );
       rows = result.rows;
@@ -2265,7 +2265,7 @@ app.get(`${API_PREFIX}/exams`, async (req, res) => {
          left join users u on e.user_id = u.id
          left join subjects s on e.subject_id = s.id
          where e.is_public = true and e.is_repository = false ${isAdmin ? "" : "and e.education_level = cast($2 as text)"}
-         order by e.created_at desc`;
+         order by NULLIF(regexp_replace(e.grade, '\\D', '', 'g'), '')::int asc nulls last, e.grade asc nulls last, e.created_at desc`;
 
       const params = isAdmin ? [userId] : [userId, userLevelStr];
       const result = await query(sql, params);
@@ -2281,7 +2281,7 @@ app.get(`${API_PREFIX}/exams`, async (req, res) => {
          left join users u on e.user_id = u.id
          left join subjects s on e.subject_id = s.id
          where ($2::boolean = true or e.user_id = $1::uuid or e.is_public = true) and e.is_repository = false
-         order by e.created_at desc`,
+         order by NULLIF(regexp_replace(e.grade, '\\D', '', 'g'), '')::int asc nulls last, e.grade asc nulls last, e.created_at desc`,
         [userId, isAdmin]
       );
       rows = result.rows;
