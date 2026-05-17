@@ -319,3 +319,28 @@ Bổ sung cấu hình quản lý Phiên bản ứng dụng (App Version), cung c
     - `ProfilePage.tsx`: Thêm state `showPasswordSuccessModal`, tái cấu trúc hàm `handleSubmit` đảm bảo cập nhật thông tin cá nhân thành công rồi mới đổi mật khẩu, hiển thị `AlertDialog` thông báo đăng nhập lại và gọi hàm `logout()`.
     - `SchedulePage.tsx`: Tăng kích thước 2 nút Lưu (Check) và Hủy (X) bên cạnh ô nhập `Tên loại...` từ 16px lên 32px (`h-8 w-8`), sử dụng thiết kế hình tròn (`rounded-full`), căn giữa flexbox, hỗ trợ màu nền tinh tế (`bg-primary/10`, `bg-red-50`) và hiệu ứng hover/active/scale-95 giúp trải nghiệm click trên Mobile mượt mà, dễ chịu hơn rất nhiều.
 - **Documentation**: Cập nhật file đặc tả [spec/api.md](file:///d:/smart-learn-rlw/spec/api.md) để đồng bộ hóa các endpoint mới.
+
+---
+
+## 16. Thiết lập Phiên bản cho Platform Android và Platform iOS (Platform Versioning Enhancements)
+
+**Date:** 2026-05-17
+
+### Task Content
+Thêm hai trường Platform Android và Platform iOS vào popup thiết định trên giao diện Quản lý tài khoản (Admin) để cấu hình phiên bản tương ứng cho từng nền tảng, đồng thời cập nhật API `/api/version-app` trả về thêm thông tin này cho ứng dụng di động.
+
+### Checklist
+- [x] Cấu hình lưu trữ phiên bản Platform Android (`platform_android`) và Platform iOS (`platform_ios`) vào bảng `system_settings` trong Cơ sở dữ liệu.
+- [x] Cập nhật API hệ thống `GET /api/settings/global` và `PUT /api/settings/global` để đồng bộ dữ liệu phiên bản mới.
+- [x] Nâng cấp giao diện Popup Thiết định (`AdminPage.tsx`) tích hợp thêm 2 trường nhập liệu cho Platform Android và Platform iOS.
+- [x] Cập nhật API công khai `/api/version-app` tự động trả về thêm hai trường `platform-android` và `platform-ios` phục vụ các thiết bị Mobile kiểm tra cập nhật.
+- [x] Đồng bộ hóa tài liệu đặc tả API (`spec/api.md`).
+
+### Nội dung thay đổi
+- **Backend**:
+    - `server/index.mjs`:
+        - Cập nhật `/settings/global` (GET/PUT) hỗ trợ gửi và nhận thêm `platformAndroid` và `platformIos`.
+        - Cập nhật `/version-app` (GET) trả về thêm các trường `platform-android` và `platform-ios` với giá trị mặc định là `"1.0.0"` nếu chưa thiết lập.
+- **Frontend**:
+    - `AdminPage.tsx`: Mở rộng popup `SettingsModal` với 2 biến state mới và các ô nhập liệu được thiết kế nhất quán về mặt thẩm mỹ để cập nhật thông tin phiên bản Android, iOS.
+- **Documentation**: Cập nhật file đặc tả [spec/api.md](file:///d:/smart-learn-rlw/spec/api.md) và [spec/change-spec.md](file:///d:/smart-learn-rlw/spec/change-spec.md).

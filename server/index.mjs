@@ -417,7 +417,13 @@ app.get(`${API_PREFIX}/settings/global`, async (req, res) => {
     const { rows: versionRows } = await query(`SELECT value FROM system_settings WHERE key = 'app_version'`);
     const appVersion = versionRows[0]?.value?.version || "1.0.0";
 
-    res.json({ plan, appVersion });
+    const { rows: androidRows } = await query(`SELECT value FROM system_settings WHERE key = 'platform_android'`);
+    const platformAndroid = androidRows[0]?.value?.version || "1.0.0";
+
+    const { rows: iosRows } = await query(`SELECT value FROM system_settings WHERE key = 'platform_ios'`);
+    const platformIos = iosRows[0]?.value?.version || "1.0.0";
+
+    res.json({ plan, appVersion, platformAndroid, platformIos });
   } catch (err) {
     console.error("GET global settings Error:", err.message);
     res.status(500).json({ error: "Lấy thiết định thất bại, vui lòng thử lại sau" });
@@ -426,9 +432,20 @@ app.get(`${API_PREFIX}/settings/global`, async (req, res) => {
 
 app.get(`${API_PREFIX}/version-app`, async (req, res) => {
   try {
-    const { rows } = await query(`SELECT value FROM system_settings WHERE key = 'app_version'`);
-    const appVersion = rows[0]?.value?.version || "1.0.0";
-    res.json({ version: appVersion });
+    const { rows: versionRows } = await query(`SELECT value FROM system_settings WHERE key = 'app_version'`);
+    const appVersion = versionRows[0]?.value?.version || "1.0.0";
+
+    const { rows: androidRows } = await query(`SELECT value FROM system_settings WHERE key = 'platform_android'`);
+    const platformAndroid = androidRows[0]?.value?.version || "1.0.0";
+
+    const { rows: iosRows } = await query(`SELECT value FROM system_settings WHERE key = 'platform_ios'`);
+    const platformIos = iosRows[0]?.value?.version || "1.0.0";
+
+    res.json({ 
+      version: appVersion,
+      "platform-android": platformAndroid,
+      "platform-ios": platformIos
+    });
   } catch (err) {
     console.error("GET version-app Error:", err.message);
     res.status(500).json({ error: "Lấy phiên bản ứng dụng thất bại" });
@@ -436,7 +453,7 @@ app.get(`${API_PREFIX}/version-app`, async (req, res) => {
 });
 
 app.put(`${API_PREFIX}/settings/global`, async (req, res) => {
-  const { plan, appVersion } = req.body || {};
+  const { plan, appVersion, platformAndroid, platformIos } = req.body || {};
   if (!plan) return res.status(400).json({ error: "Vui lòng chọn gói dịch vụ" });
 
   try {
@@ -458,7 +475,27 @@ app.put(`${API_PREFIX}/settings/global`, async (req, res) => {
       );
     }
 
-    res.json({ plan, appVersion });
+    if (platformAndroid) {
+      const androidValue = JSON.stringify({ version: platformAndroid });
+      await query(
+        `INSERT INTO system_settings (key, value, updated_at) 
+         VALUES ('platform_android', $1, NOW()) 
+         ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()`,
+        [androidValue]
+      );
+    }
+
+    if (platformIos) {
+      const iosValue = JSON.stringify({ version: platformIos });
+      await query(
+        `INSERT INTO system_settings (key, value, updated_at) 
+         VALUES ('platform_ios', $1, NOW()) 
+         ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()`,
+        [iosValue]
+      );
+    }
+
+    res.json({ plan, appVersion, platformAndroid, platformIos });
   } catch (err) {
     console.error("PUT global settings Error:", err.message);
     res.status(500).json({ error: "Cập nhật thiết định thất bại, vui lòng thử lại sau" });

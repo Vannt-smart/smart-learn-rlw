@@ -235,13 +235,15 @@ Upload a single file (generic).
 ## ⚙️ System Settings
 
 ### `GET /api/settings/global`
-Fetch the current global settings including default plan and app version.
+Fetch the current global settings including default plan, app version, and platform versions.
 
 **Response:** `200 OK`
 ```json
 {
   "plan": "Miễn phí",
-  "appVersion": "1.0.0"
+  "appVersion": "1.0.0",
+  "platformAndroid": "1.0.0",
+  "platformIos": "1.0.0"
 }
 ```
 
@@ -251,19 +253,23 @@ Fetch the current global settings including default plan and app version.
 | `500` | Lỗi server | `"Lấy thiết định thất bại, vui lòng thử lại sau"` |
 
 ### `PUT /api/settings/global` *(Admin only)*
-Update the global settings (default plan and app version).
+Update the global settings (default plan, app version, and platform versions).
 
 **Request Body:**
-| Field        | Type   | Required | Description |
-|--------------|--------|----------|-------------|
-| `plan`       | string | ✅       | Gói dịch vụ mặc định khi đăng ký |
-| `appVersion` | string | ❌       | Phiên bản ứng dụng |
+| Field             | Type   | Required | Description |
+|-------------------|--------|----------|-------------|
+| `plan`            | string | ✅       | Gói dịch vụ mặc định khi đăng ký |
+| `appVersion`      | string | ❌       | Phiên bản ứng dụng |
+| `platformAndroid` | string | ❌       | Phiên bản platform android |
+| `platformIos`     | string | ❌       | Phiên bản platform ios |
 
 **Response:** `200 OK`
 ```json
 {
   "plan": "1 tháng",
-  "appVersion": "1.0.1"
+  "appVersion": "1.0.1",
+  "platformAndroid": "1.0.1",
+  "platformIos": "1.0.1"
 }
 ```
 
@@ -274,12 +280,14 @@ Update the global settings (default plan and app version).
 | `500` | Lỗi server | `"Cập nhật thiết định thất bại, vui lòng thử lại sau"` |
 
 ### `GET /api/version-app` *(Public)*
-Retrieve the current app version configured in settings. This is a public API without authentication.
+Retrieve the current app version and platform versions configured in settings. This is a public API without authentication.
 
 **Response:** `200 OK`
 ```json
 {
-  "version": "1.0.0"
+  "version": "1.0.0",
+  "platform-android": "https://play.google.com/store/apps/details?id=net.smartlearn.app&hl=en-US&ah=8DhZphyUxI4V11VD4yIj6zCKYRg",
+  "platform-ios": "https://apps.apple.com"
 }
 ```
 

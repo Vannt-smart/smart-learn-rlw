@@ -532,6 +532,8 @@ function SettingsModal({ plans, onClose }: { plans: any[]; onClose: () => void }
   const queryClient = useQueryClient();
   const [plan, setPlan] = useState("Miễn phí");
   const [appVersion, setAppVersion] = useState("");
+  const [platformAndroid, setPlatformAndroid] = useState("");
+  const [platformIos, setPlatformIos] = useState("");
 
   const { data, isLoading } = useQuery({
     queryKey: ["settings", "global"],
@@ -541,6 +543,8 @@ function SettingsModal({ plans, onClose }: { plans: any[]; onClose: () => void }
   useEffect(() => {
     if (data?.plan) setPlan(data.plan);
     if (data?.appVersion) setAppVersion(data.appVersion);
+    if (data?.platformAndroid) setPlatformAndroid(data.platformAndroid);
+    if (data?.platformIos) setPlatformIos(data.platformIos);
   }, [data]);
 
   const mutation = useMutation({
@@ -568,7 +572,7 @@ function SettingsModal({ plans, onClose }: { plans: any[]; onClose: () => void }
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
         ) : (
-          <form onSubmit={(e) => { e.preventDefault(); mutation.mutate({ plan, appVersion }); }} className="space-y-4">
+          <form onSubmit={(e) => { e.preventDefault(); mutation.mutate({ plan, appVersion, platformAndroid, platformIos }); }} className="space-y-4">
             <div className="space-y-1.5">
               <label className="text-sm font-semibold text-muted-foreground">Chọn gói cước mặc định gán cho User khi đăng ký mới:</label>
               <select value={plan} onChange={(e) => setPlan(e.target.value)}
@@ -582,6 +586,18 @@ function SettingsModal({ plans, onClose }: { plans: any[]; onClose: () => void }
             <div className="space-y-1.5">
               <label className="text-sm font-semibold text-muted-foreground">Phiên bản ứng dụng (App Version):</label>
               <input value={appVersion} onChange={(e) => setAppVersion(e.target.value)} placeholder="vd: 1.0.0"
+                className="w-full rounded-xl border-2 border-input bg-background px-4 py-2.5 text-sm font-medium focus:border-primary focus:outline-none" />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-sm font-semibold text-muted-foreground">Platform Android:</label>
+              <input value={platformAndroid} onChange={(e) => setPlatformAndroid(e.target.value)} placeholder="vd: 1.0.0"
+                className="w-full rounded-xl border-2 border-input bg-background px-4 py-2.5 text-sm font-medium focus:border-primary focus:outline-none" />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-sm font-semibold text-muted-foreground">Platform iOS:</label>
+              <input value={platformIos} onChange={(e) => setPlatformIos(e.target.value)} placeholder="vd: 1.0.0"
                 className="w-full rounded-xl border-2 border-input bg-background px-4 py-2.5 text-sm font-medium focus:border-primary focus:outline-none" />
             </div>
 
