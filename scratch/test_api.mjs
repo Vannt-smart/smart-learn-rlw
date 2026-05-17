@@ -9,7 +9,7 @@ async function run() {
     const json = await res.json();
     console.log("Response JSON:", JSON.stringify(json, null, 2));
 
-    if (json.version && json["platform-android"] && json["platform-ios"]) {
+    if (json["version-android"] && json["version-ios"] && json["platform-android"] && json["platform-ios"]) {
       console.log("SUCCESS: /api/version-app API verified successfully!");
     } else {
       console.error("FAILURE: API response structure is incorrect!");

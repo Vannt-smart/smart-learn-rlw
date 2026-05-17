@@ -531,7 +531,8 @@ function ChangePwModal({ user, onClose }: { user: User; onClose: () => void }) {
 function SettingsModal({ plans, onClose }: { plans: any[]; onClose: () => void }) {
   const queryClient = useQueryClient();
   const [plan, setPlan] = useState("Miễn phí");
-  const [appVersion, setAppVersion] = useState("");
+  const [appVersionAndroid, setAppVersionAndroid] = useState("");
+  const [appVersionIos, setAppVersionIos] = useState("");
   const [platformAndroid, setPlatformAndroid] = useState("");
   const [platformIos, setPlatformIos] = useState("");
 
@@ -542,7 +543,12 @@ function SettingsModal({ plans, onClose }: { plans: any[]; onClose: () => void }
 
   useEffect(() => {
     if (data?.plan) setPlan(data.plan);
-    if (data?.appVersion) setAppVersion(data.appVersion);
+    if (data?.appVersionAndroid) {
+      setAppVersionAndroid(data.appVersionAndroid);
+    } else if (data?.appVersion) {
+      setAppVersionAndroid(data.appVersion);
+    }
+    if (data?.appVersionIos) setAppVersionIos(data.appVersionIos);
     if (data?.platformAndroid) setPlatformAndroid(data.platformAndroid);
     if (data?.platformIos) setPlatformIos(data.platformIos);
   }, [data]);
@@ -572,7 +578,7 @@ function SettingsModal({ plans, onClose }: { plans: any[]; onClose: () => void }
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
         ) : (
-          <form onSubmit={(e) => { e.preventDefault(); mutation.mutate({ plan, appVersion, platformAndroid, platformIos }); }} className="space-y-4">
+          <form onSubmit={(e) => { e.preventDefault(); mutation.mutate({ plan, appVersionAndroid, appVersionIos, platformAndroid, platformIos }); }} className="space-y-4">
             <div className="space-y-1.5">
               <label className="text-sm font-semibold text-muted-foreground">Chọn gói cước mặc định gán cho User khi đăng ký mới:</label>
               <select value={plan} onChange={(e) => setPlan(e.target.value)}
@@ -584,8 +590,14 @@ function SettingsModal({ plans, onClose }: { plans: any[]; onClose: () => void }
             </div>
             
             <div className="space-y-1.5">
-              <label className="text-sm font-semibold text-muted-foreground">Phiên bản ứng dụng (App Version):</label>
-              <input value={appVersion} onChange={(e) => setAppVersion(e.target.value)} placeholder="vd: 1.0.0"
+              <label className="text-sm font-semibold text-muted-foreground">App Version Android:</label>
+              <input value={appVersionAndroid} onChange={(e) => setAppVersionAndroid(e.target.value)} placeholder="vd: 1.0.0"
+                className="w-full rounded-xl border-2 border-input bg-background px-4 py-2.5 text-sm font-medium focus:border-primary focus:outline-none" />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-sm font-semibold text-muted-foreground">App Version IOS:</label>
+              <input value={appVersionIos} onChange={(e) => setAppVersionIos(e.target.value)} placeholder="vd: 1.0.0"
                 className="w-full rounded-xl border-2 border-input bg-background px-4 py-2.5 text-sm font-medium focus:border-primary focus:outline-none" />
             </div>
 

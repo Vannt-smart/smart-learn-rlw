@@ -414,8 +414,11 @@ app.get(`${API_PREFIX}/settings/global`, async (req, res) => {
     const { rows: planRows } = await query(`SELECT value FROM system_settings WHERE key = 'default_user_plan'`);
     const plan = planRows[0]?.value?.plan || "Miễn phí";
 
-    const { rows: versionRows } = await query(`SELECT value FROM system_settings WHERE key = 'app_version'`);
-    const appVersion = versionRows[0]?.value?.version || "1.0.0";
+    const { rows: versionAndroidRows } = await query(`SELECT value FROM system_settings WHERE key = 'app_version'`);
+    const appVersionAndroid = versionAndroidRows[0]?.value?.version || "1.0.0";
+
+    const { rows: versionIosRows } = await query(`SELECT value FROM system_settings WHERE key = 'app_version_ios'`);
+    const appVersionIos = versionIosRows[0]?.value?.version || "1.0.0";
 
     const { rows: androidRows } = await query(`SELECT value FROM system_settings WHERE key = 'platform_android'`);
     const platformAndroid = androidRows[0]?.value?.version || "1.0.0";
@@ -423,7 +426,7 @@ app.get(`${API_PREFIX}/settings/global`, async (req, res) => {
     const { rows: iosRows } = await query(`SELECT value FROM system_settings WHERE key = 'platform_ios'`);
     const platformIos = iosRows[0]?.value?.version || "1.0.0";
 
-    res.json({ plan, appVersion, platformAndroid, platformIos });
+    res.json({ plan, appVersionAndroid, appVersionIos, platformAndroid, platformIos });
   } catch (err) {
     console.error("GET global settings Error:", err.message);
     res.status(500).json({ error: "Lấy thiết định thất bại, vui lòng thử lại sau" });
@@ -432,8 +435,11 @@ app.get(`${API_PREFIX}/settings/global`, async (req, res) => {
 
 app.get(`${API_PREFIX}/version-app`, async (req, res) => {
   try {
-    const { rows: versionRows } = await query(`SELECT value FROM system_settings WHERE key = 'app_version'`);
-    const appVersion = versionRows[0]?.value?.version || "1.0.0";
+    const { rows: versionAndroidRows } = await query(`SELECT value FROM system_settings WHERE key = 'app_version'`);
+    const appVersionAndroid = versionAndroidRows[0]?.value?.version || "1.0.0";
+
+    const { rows: versionIosRows } = await query(`SELECT value FROM system_settings WHERE key = 'app_version_ios'`);
+    const appVersionIos = versionIosRows[0]?.value?.version || "1.0.0";
 
     const { rows: androidRows } = await query(`SELECT value FROM system_settings WHERE key = 'platform_android'`);
     const platformAndroid = androidRows[0]?.value?.version || "1.0.0";
@@ -442,7 +448,8 @@ app.get(`${API_PREFIX}/version-app`, async (req, res) => {
     const platformIos = iosRows[0]?.value?.version || "1.0.0";
 
     res.json({ 
-      version: appVersion,
+      "version-android": appVersionAndroid,
+      "version-ios": appVersionIos,
       "platform-android": platformAndroid,
       "platform-ios": platformIos
     });
@@ -453,7 +460,7 @@ app.get(`${API_PREFIX}/version-app`, async (req, res) => {
 });
 
 app.put(`${API_PREFIX}/settings/global`, async (req, res) => {
-  const { plan, appVersion, platformAndroid, platformIos } = req.body || {};
+  const { plan, appVersionAndroid, appVersionIos, platformAndroid, platformIos } = req.body || {};
   if (!plan) return res.status(400).json({ error: "Vui lòng chọn gói dịch vụ" });
 
   try {
@@ -465,8 +472,8 @@ app.put(`${API_PREFIX}/settings/global`, async (req, res) => {
       [planValue]
     );
 
-    if (appVersion) {
-      const versionValue = JSON.stringify({ version: appVersion });
+    if (appVersionAndroid !== undefined) {
+      const versionValue = JSON.stringify({ version: appVersionAndroid });
       await query(
         `INSERT INTO system_settings (key, value, updated_at) 
          VALUES ('app_version', $1, NOW()) 
@@ -475,7 +482,17 @@ app.put(`${API_PREFIX}/settings/global`, async (req, res) => {
       );
     }
 
-    if (platformAndroid) {
+    if (appVersionIos !== undefined) {
+      const versionIosValue = JSON.stringify({ version: appVersionIos });
+      await query(
+        `INSERT INTO system_settings (key, value, updated_at) 
+         VALUES ('app_version_ios', $1, NOW()) 
+         ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()`,
+        [versionIosValue]
+      );
+    }
+
+    if (platformAndroid !== undefined) {
       const androidValue = JSON.stringify({ version: platformAndroid });
       await query(
         `INSERT INTO system_settings (key, value, updated_at) 
@@ -485,7 +502,7 @@ app.put(`${API_PREFIX}/settings/global`, async (req, res) => {
       );
     }
 
-    if (platformIos) {
+    if (platformIos !== undefined) {
       const iosValue = JSON.stringify({ version: platformIos });
       await query(
         `INSERT INTO system_settings (key, value, updated_at) 
@@ -495,7 +512,7 @@ app.put(`${API_PREFIX}/settings/global`, async (req, res) => {
       );
     }
 
-    res.json({ plan, appVersion, platformAndroid, platformIos });
+    res.json({ plan, appVersionAndroid, appVersionIos, platformAndroid, platformIos });
   } catch (err) {
     console.error("PUT global settings Error:", err.message);
     res.status(500).json({ error: "Cập nhật thiết định thất bại, vui lòng thử lại sau" });
