@@ -125,10 +125,10 @@ export default function QuizTakePage() {
   };
 
   const TimerCard = ({ value, isDanger }: { value: string, isDanger: boolean }) => (
-    <div className={`flex items-center justify-center rounded-xl p-2 transition-all duration-300 ${
+    <div className={`flex items-center justify-center rounded-lg p-1 transition-all duration-300 ${
       isDanger ? "text-red-600 animate-pulse" : "text-gray-800"
     }`}>
-      <span className="text-2xl sm:text-3xl font-black tabular-nums tracking-tighter">
+      <span className="text-xl sm:text-2xl font-black tabular-nums tracking-tighter">
         {value}
       </span>
     </div>
@@ -156,88 +156,53 @@ export default function QuizTakePage() {
   const currentQuestion = exam.questions[currentIdx];
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC]">
+    <div className="h-screen bg-[#F8FAFC] flex flex-col overflow-hidden">
       {/* Header */}
-      <header className="sticky top-0 z-40 w-full border-b bg-white px-4 shadow-sm">
-        <div className="container max-w-6xl py-3 flex flex-col gap-2">
-          {/* Row 1: Title Area */}
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 flex-shrink-0 flex items-center justify-center rounded-2xl bg-primary/10 text-primary border border-primary/20 shadow-sm">
-              <ShieldCheck className="h-6 w-6" />
+      <header className="shrink-0 sticky top-0 z-40 w-full border-b bg-white px-2 sm:px-4 shadow-sm">
+        <div className="container max-w-7xl py-2 flex items-center justify-between gap-2 sm:gap-4">
+          {/* Title Area */}
+          <div className="flex items-center gap-2 sm:gap-3 overflow-hidden">
+            <div className="hidden sm:flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary border border-primary/20 shadow-sm">
+              <ShieldCheck className="h-4 w-4" />
             </div>
             <div className="min-w-0 flex-1">
-              <h1 className="text-base sm:text-lg font-black truncate text-gray-800 leading-tight">{exam.title}</h1>
-              <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-[0.1em]">Làm bài thi trắc nghiệm</p>
+              <h1 className="text-sm sm:text-base font-black truncate text-gray-800 leading-tight">{exam.title}</h1>
+              <p className="hidden sm:block text-[9px] sm:text-[10px] text-muted-foreground font-bold uppercase tracking-[0.1em]">Làm bài thi trắc nghiệm</p>
             </div>
           </div>
 
-          {/* Row 2: Timer & Submit (Moved to new row) */}
-          <div className="flex items-center justify-between bg-slate-50/80 rounded-2xl p-2 pl-4 border border-slate-100">
-            <div className="flex items-center gap-1">
-              <Clock className="h-4 w-4 text-slate-400 mr-1" />
+          <div className="flex items-center gap-2 sm:gap-4">
+            {/* Timer */}
+            <div className="flex items-center gap-1 bg-slate-50/80 rounded-xl p-1 px-3 border border-slate-100">
+              <Clock className="h-3.5 w-3.5 text-slate-400 mr-0.5" />
               <TimerCard 
                 value={getFormattedTime(timeLeft).minutes} 
                 isDanger={timeLeft < 60} 
               />
-              <div className={`text-xl font-bold mx-0.5 ${timeLeft < 60 ? "text-red-500" : "text-slate-300"}`}>:</div>
+              <div className={`text-lg font-bold mx-0.5 ${timeLeft < 60 ? "text-red-500" : "text-slate-300"}`}>:</div>
               <TimerCard 
                 value={getFormattedTime(timeLeft).seconds} 
                 isDanger={timeLeft < 60} 
               />
             </div>
+            {/* Submit */}
             <Button 
               onClick={handleSubmit} 
-              className="rounded-xl h-10 px-6 text-sm font-bold flex items-center gap-2 shadow-md shadow-primary/20 bg-primary hover:bg-primary/90 transition-all active:scale-95"
+              className="rounded-xl h-8 sm:h-10 px-4 sm:px-6 text-xs sm:text-sm font-bold flex items-center gap-1.5 shadow-sm shadow-primary/20 bg-primary hover:bg-primary/90 transition-all active:scale-95"
             >
-              <Send className="h-4 w-4" />
-              Nộp bài
+              <Send className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Nộp bài</span>
             </Button>
           </div>
         </div>
       </header>
 
-      <main className="container max-w-5xl py-8 px-4 grid grid-cols-1 lg:grid-cols-4 gap-8">
-        {/* Navigation Sidebar */}
-        <aside className="lg:col-span-1 space-y-6 order-2 lg:order-1">
-          <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
-            <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-widest mb-4">Mục lục câu hỏi</h3>
-            <div className="grid grid-cols-5 gap-2">
-              {exam.questions.map((q, idx) => (
-                <button
-                  key={q.id}
-                  onClick={() => setCurrentIdx(idx)}
-                  className={`h-10 w-10 rounded-xl text-sm font-bold transition-all ${
-                    idx === currentIdx 
-                      ? "bg-primary text-white shadow-md shadow-primary/20 ring-4 ring-primary/5 scale-110" 
-                      : userAnswers[q.id] !== undefined && (
-                          q.type === "ordering" ? userAnswers[q.id]?.selected?.length > 0 :
-                          (Array.isArray(userAnswers[q.id]) ? userAnswers[q.id].length > 0 : userAnswers[q.id] !== "")
-                        ) 
-                        ? "bg-green-100 text-green-700 border border-green-200" 
-                        : "bg-muted/50 text-muted-foreground hover:bg-muted"
-                  }`}
-                >
-                  {idx + 1}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="bg-orange-50 rounded-2xl p-6 border border-orange-100 space-y-3">
-            <div className="flex items-center gap-2 text-orange-700 font-bold text-sm">
-              <AlertTriangle className="h-4 w-4" /> Lưu ý quan trọng
-            </div>
-            <p className="text-xs text-orange-600 leading-relaxed font-medium">
-              Bạn không nên tải lại trang hoặc nhấn nút quay lại để tránh mất dữ liệu bài làm. Toàn bộ đáp án sẽ được nộp tự động khi hết giờ.
-            </p>
-          </div>
-        </aside>
-
+      <main className="container max-w-7xl flex-1 min-h-0 py-4 lg:py-6 px-4 flex flex-col lg:flex-row gap-4 lg:gap-6">
         {/* Content Area */}
-        <section className="lg:col-span-3 space-y-6 order-1 lg:order-2 w-full overflow-hidden">
-          <div className="bg-white rounded-2xl sm:rounded-[32px] p-5 sm:p-12 shadow-sm border border-gray-100 min-h-[400px] flex flex-col justify-between w-full">
+        <section className="flex-1 lg:flex-[3] flex flex-col order-1 w-full min-h-0 gap-4">
+          <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-sm border border-gray-100 flex-1 overflow-y-auto w-full [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             <div>
-              <div className="flex items-center gap-3 mb-8">
+              <div className="flex items-center gap-3 mb-3 sm:mb-4">
                 <span className="text-sm font-bold text-primary bg-primary/10 px-3 py-1 rounded-full uppercase tracking-widest">
                   Câu hỏi {currentIdx + 1}
                 </span>
@@ -248,9 +213,11 @@ export default function QuizTakePage() {
                 )}
               </div>
               
-              <div className="mb-10">
-                <h2 className="text-2xl font-bold leading-snug text-gray-800">
-                  {currentQuestion.type === "ordering" ? "Sắp xếp lại theo thứ tự đúng của câu." : currentQuestion.content}
+              <div className="mb-4 sm:mb-6 bg-emerald-50/60 p-4 sm:p-5 rounded-2xl border border-emerald-100">
+                <h2 className="text-base sm:text-lg font-medium leading-relaxed text-gray-800 whitespace-pre-wrap">
+                  {(currentQuestion.type === "ordering" && (!currentQuestion.content || currentQuestion.content === "Sắp xếp câu")) 
+                    ? "Sắp xếp lại theo thứ tự đúng của câu." 
+                    : currentQuestion.content}
                 </h2>
                 {currentQuestion.type === "ordering" && (
                   <div className="text-sm text-muted-foreground flex items-center mt-3">
@@ -268,7 +235,7 @@ export default function QuizTakePage() {
                         <button
                           key={item.id}
                           onClick={() => handleOrderingClick(currentQuestion.id, item, "available")}
-                          className="px-4 py-2 sm:px-6 sm:py-3 rounded-2xl border-2 shadow-sm font-heading text-base sm:text-lg font-bold transition-all border-green-500 bg-green-500 text-white hover:bg-green-600 hover:scale-105"
+                          className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl border-2 shadow-sm font-heading text-sm sm:text-base font-bold transition-all border-green-500 bg-green-500 text-white hover:bg-green-600 hover:scale-105"
                         >
                           {item.word}
                         </button>
@@ -276,12 +243,12 @@ export default function QuizTakePage() {
                     </div>
                     
                     {/* Bottom list: Selected Words */}
-                    <div className="p-6 sm:p-8 rounded-[2rem] border-4 border-dashed bg-gray-50/50 border-gray-200 min-h-[160px] flex flex-wrap justify-center gap-3 sm:gap-4 items-center content-center">
+                    <div className="p-4 sm:p-6 rounded-3xl border-4 border-dashed bg-gray-50/50 border-gray-200 min-h-[120px] flex flex-wrap justify-center gap-2 sm:gap-3 items-center content-center">
                       {(userAnswers[currentQuestion.id]?.selected || []).map((item: any) => (
                         <button
                           key={item.id}
                           onClick={() => handleOrderingClick(currentQuestion.id, item, "selected")}
-                          className="px-4 py-2 sm:px-6 sm:py-3 rounded-2xl border-2 shadow-sm font-heading text-base sm:text-lg font-bold transition-all border-green-200 bg-green-50 text-green-700 hover:bg-red-50 hover:border-red-200 hover:text-red-500"
+                          className="px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl border-2 shadow-sm font-heading text-sm sm:text-base font-bold transition-all border-green-200 bg-green-50 text-green-700 hover:bg-red-50 hover:border-red-200 hover:text-red-500"
                         >
                           {item.word}
                         </button>
@@ -295,11 +262,11 @@ export default function QuizTakePage() {
                       placeholder="Nhập nội dung trả lời..."
                       value={userAnswers[currentQuestion.id] || ""}
                       onChange={(e) => handleAnswer(currentQuestion.id, e.target.value)}
-                      className="w-full min-h-[150px] p-6 rounded-3xl border-2 border-gray-100 bg-gray-50/50 focus:border-primary/30 focus:bg-white focus:outline-none transition-all text-lg font-medium"
+                      className="w-full min-h-[120px] p-4 sm:p-5 rounded-2xl border-2 border-gray-100 bg-gray-50/50 focus:border-primary/30 focus:bg-white focus:outline-none transition-all text-sm sm:text-base font-medium"
                     />
                   </div>
                 ) : (
-                  <div className="grid gap-3">
+                  <div className="grid gap-2 sm:gap-3">
                     {currentQuestion.options.map((option, oIdx) => {
                       const isSelected = currentQuestion.type === "multiple" 
                         ? (userAnswers[currentQuestion.id] || []).includes(option.id)
@@ -309,13 +276,13 @@ export default function QuizTakePage() {
                         <button
                           key={option.id}
                           onClick={() => handleAnswer(currentQuestion.id, option.id)}
-                          className={`flex items-center gap-4 p-6 rounded-[24px] border-2 text-left transition-all ${
+                          className={`flex items-center gap-3 p-3 sm:p-4 rounded-2xl border-2 text-left transition-all ${
                             isSelected 
                               ? "border-primary bg-primary/5 shadow-sm ring-1 ring-primary/5" 
                               : "border-gray-100 hover:border-gray-200 hover:bg-gray-50/30"
                           }`}
                         >
-                          <div className={`flex h-6 w-6 items-center justify-center border-2 transition-all ${
+                          <div className={`flex shrink-0 h-6 w-6 items-center justify-center border-2 transition-all ${
                             currentQuestion.type === "single" ? "rounded-full" : "rounded-[6px]"
                           } ${
                             isSelected ? "bg-primary border-primary text-white" : "border-gray-300 bg-white"
@@ -328,7 +295,7 @@ export default function QuizTakePage() {
                               )
                             )}
                           </div>
-                          <span className={`text-lg font-semibold ${isSelected ? "text-primary" : "text-gray-700"}`}>
+                          <span className={`text-sm sm:text-base font-semibold ${isSelected ? "text-primary" : "text-gray-700"}`}>
                             {option.content}
                           </span>
                         </button>
@@ -338,39 +305,76 @@ export default function QuizTakePage() {
                 )}
               </div>
             </div>
+          </div>
 
-            <div className="flex flex-wrap items-center justify-between gap-3 pt-8 mt-8 sm:pt-12 sm:mt-12 border-t">
-              <Button
-                variant="ghost"
-                onClick={() => setCurrentIdx(prev => Math.max(0, prev - 1))}
-                disabled={currentIdx === 0}
-                className="rounded-2xl h-10 sm:h-12 px-3 sm:px-6 font-bold flex items-center gap-1 sm:gap-2 text-xs sm:text-base"
-              >
-                <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5" /> Câu trước
-              </Button>
-              
-              <div className="text-xs sm:text-sm font-bold text-muted-foreground tabular-nums px-2">
-                {currentIdx + 1} / {exam.questions.length}
-              </div>
-
-              {currentIdx < exam.questions.length - 1 ? (
-                <Button
-                  onClick={() => setCurrentIdx(prev => Math.max(0, prev + 1))}
-                  className="rounded-2xl h-10 sm:h-12 px-3 sm:px-6 font-bold flex items-center gap-1 sm:gap-2 text-xs sm:text-base"
-                >
-                  Câu tiếp theo <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5" />
-                </Button>
-              ) : (
-                <Button
-                  onClick={handleSubmit}
-                  className="rounded-2xl h-10 sm:h-12 px-4 sm:px-8 font-bold flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white shadow-lg shadow-green-600/20 text-xs sm:text-base"
-                >
-                  Nộp bài
-                </Button>
-              )}
+          {/* Nav Controls */}
+          <div className="shrink-0 flex items-center justify-between bg-white rounded-2xl p-2 sm:p-3 shadow-sm border border-gray-100">
+            <Button
+              variant="ghost"
+              onClick={() => setCurrentIdx(prev => Math.max(0, prev - 1))}
+              disabled={currentIdx === 0}
+              className="rounded-xl h-9 sm:h-10 px-3 sm:px-5 font-bold flex items-center gap-1 sm:gap-2 text-xs sm:text-sm"
+            >
+              <ChevronLeft className="h-4 w-4" /> Câu trước
+            </Button>
+            
+            <div className="text-xs sm:text-sm font-bold text-muted-foreground tabular-nums px-2">
+              {currentIdx + 1} / {exam.questions.length}
             </div>
+
+            {currentIdx < exam.questions.length - 1 ? (
+              <Button
+                onClick={() => setCurrentIdx(prev => Math.max(0, prev + 1))}
+                className="rounded-xl h-9 sm:h-10 px-3 sm:px-5 font-bold flex items-center gap-1 sm:gap-2 text-xs sm:text-sm"
+              >
+                Câu tiếp theo <ChevronRight className="h-4 w-4" />
+              </Button>
+            ) : (
+              <Button
+                onClick={handleSubmit}
+                className="rounded-xl h-9 sm:h-10 px-4 sm:px-6 font-bold flex items-center gap-1.5 bg-green-600 hover:bg-green-700 text-white shadow-sm shadow-green-600/20 text-xs sm:text-sm"
+              >
+                Nộp bài
+              </Button>
+            )}
           </div>
         </section>
+
+        {/* Navigation Sidebar */}
+        <aside className="w-full lg:w-[260px] shrink-0 flex flex-col gap-4 order-2 min-h-0">
+          <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-gray-100 flex flex-col flex-1 min-h-0">
+            <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-widest mb-3 shrink-0">Mục lục câu hỏi</h3>
+            <div className="grid grid-cols-5 sm:grid-cols-10 lg:grid-cols-5 gap-2 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] flex-1 content-start pr-1">
+              {exam.questions.map((q, idx) => (
+                <button
+                  key={q.id}
+                  onClick={() => setCurrentIdx(idx)}
+                  className={`h-9 w-9 sm:h-10 sm:w-10 rounded-xl text-sm font-bold transition-all flex items-center justify-center ${
+                    idx === currentIdx 
+                      ? "bg-primary text-white shadow-md shadow-primary/20 ring-4 ring-primary/5 scale-110" 
+                      : userAnswers[q.id] !== undefined && (
+                          q.type === "ordering" ? userAnswers[q.id]?.selected?.length > 0 :
+                          (Array.isArray(userAnswers[q.id]) ? userAnswers[q.id].length > 0 : userAnswers[q.id] !== "")
+                        ) 
+                        ? "bg-green-100 text-green-700 border border-green-200" 
+                        : "bg-muted/50 text-muted-foreground hover:bg-muted"
+                  }`}
+                >
+                  {idx + 1}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="bg-orange-50 rounded-2xl p-4 sm:p-5 border border-orange-100 space-y-2 shrink-0">
+            <div className="flex items-center gap-2 text-orange-700 font-bold text-sm">
+              <AlertTriangle className="h-4 w-4" /> Lưu ý quan trọng
+            </div>
+            <p className="text-xs text-orange-600 leading-relaxed font-medium">
+              Bạn không nên tải lại trang hoặc nhấn nút quay lại để tránh mất dữ liệu bài làm. Toàn bộ đáp án sẽ được nộp tự động khi hết giờ.
+            </p>
+          </div>
+        </aside>
       </main>
     </div>
   );

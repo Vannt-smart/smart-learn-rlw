@@ -276,7 +276,7 @@ export default function QuizFormPage() {
 
           return {
             id: Date.now() + index,
-            content: type === "ordering" ? "Sắp xếp câu" : (row["Câu hỏi"] || "Câu hỏi không tên"),
+            content: (row["Câu hỏi"] || (type === "ordering" ? "Sắp xếp câu" : "Câu hỏi không tên")),
             type,
             options: options.length > 0 ? options : [{ id: Date.now(), content: "Lựa chọn 1", is_correct: true }]
           };

@@ -147,7 +147,9 @@ export default function QuizRunner({ questions }: { questions: QuizQuestion[] })
            </div>
         )}
         <h3 className="font-heading text-xl sm:text-2xl font-bold text-gray-800 leading-tight">
-          {q.type === "ordering" ? "Sắp xếp lại theo thứ tự đúng của câu." : q.question}
+          {(q.type === "ordering" && (!q.question || q.question === "Sắp xếp câu") && (!q.content || q.content === "Sắp xếp câu")) 
+            ? "Sắp xếp lại theo thứ tự đúng của câu." 
+            : (q.question || q.content)}
         </h3>
         {q.type === "ordering" && (
           <div className="text-sm text-gray-400 flex items-center mt-3">

@@ -193,7 +193,9 @@ export default function QuizResultPage() {
             </div>
 
             <h3 className="text-xl font-bold leading-snug mb-8 text-gray-800">
-              {q.type === "ordering" ? "Sắp xếp lại theo thứ tự đúng của câu." : q.content}
+              {(q.type === "ordering" && (!q.content || q.content === "Sắp xếp câu")) 
+                ? "Sắp xếp lại theo thứ tự đúng của câu." 
+                : q.content}
             </h3>
 
             <div className="space-y-4">

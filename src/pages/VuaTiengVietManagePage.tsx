@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Plus, Trash2, Edit2, Loader2, Save, FileQuestion, Upload, Download, FileSpreadsheet, ArrowLeft } from "lucide-react";
+import { Plus, Trash2, Edit2, Loader2, Save, FileQuestion, Upload, Download, FileSpreadsheet, ArrowLeft, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { apiFetch } from "@/lib/api";
@@ -29,6 +29,7 @@ export default function VuaTiengVietManagePage() {
   const [selectedFilter, setSelectedFilter] = useState<string | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' }>({ key: 'created_at', direction: 'desc' });
 
   // Pagination State
   const [totalCount, setTotalCount] = useState(0);
@@ -46,10 +47,10 @@ export default function VuaTiengVietManagePage() {
   const [importing, setImporting] = useState(false);
   const [exporting, setExporting] = useState(false);
 
-  const fetchQuestions = async (page = currentPage, filter = selectedFilter) => {
+  const fetchQuestions = async (page = currentPage, filter = selectedFilter, sort = sortConfig) => {
     setLoading(true);
     try {
-      const query = `/vuatiengviet?page=${page}&limit=${pageSize}${filter ? `&level=${filter}` : ""}`;
+      const query = `/vuatiengviet?page=${page}&limit=${pageSize}${filter ? `&level=${filter}` : ""}&sortBy=${sort.key}&order=${sort.direction}`;
       const response = await apiFetch<any>(query);
       setQuestions(response.data);
       setTotalCount(response.total);
@@ -63,8 +64,28 @@ export default function VuaTiengVietManagePage() {
   };
 
   useEffect(() => {
-    fetchQuestions(currentPage, selectedFilter);
-  }, [currentPage, selectedFilter]);
+    fetchQuestions(currentPage, selectedFilter, sortConfig);
+  }, [currentPage, selectedFilter, sortConfig]);
+
+  const handleSort = (key: string) => {
+    let direction: 'asc' | 'desc' = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+    setCurrentPage(1);
+  };
+
+  const renderSortIcon = (key: string) => {
+    if (sortConfig.key !== key) {
+      return <ArrowUpDown className="h-3.5 w-3.5 ml-1 opacity-20 group-hover:opacity-100 transition-opacity" />;
+    }
+    return sortConfig.direction === 'asc' ? (
+      <ArrowUp className="h-3.5 w-3.5 ml-1 text-primary" />
+    ) : (
+      <ArrowDown className="h-3.5 w-3.5 ml-1 text-primary" />
+    );
+  };
 
   const handleFilterChange = (filter: string | null) => {
     setSelectedFilter(filter);
@@ -363,10 +384,26 @@ export default function VuaTiengVietManagePage() {
               <table className="w-full text-left text-sm whitespace-nowrap">
                 <thead className="bg-muted/50 border-b border-border">
                   <tr>
-                    <th className="px-4 py-4 font-semibold text-muted-foreground w-28">Cấp độ</th>
-                    <th className="px-4 py-4 font-semibold text-muted-foreground min-w-[200px]">Câu hỏi</th>
-                    <th className="px-4 py-4 font-semibold text-muted-foreground">Trả lời</th>
-                    <th className="px-4 py-4 font-semibold text-muted-foreground">Gợi ý</th>
+                    <th className="px-4 py-4 font-semibold text-muted-foreground w-28 cursor-pointer group hover:bg-muted transition-colors select-none" onClick={() => handleSort('level')}>
+                      <div className="flex items-center">
+                        Cấp độ {renderSortIcon('level')}
+                      </div>
+                    </th>
+                    <th className="px-4 py-4 font-semibold text-muted-foreground min-w-[200px] cursor-pointer group hover:bg-muted transition-colors select-none" onClick={() => handleSort('question')}>
+                      <div className="flex items-center">
+                        Câu hỏi {renderSortIcon('question')}
+                      </div>
+                    </th>
+                    <th className="px-4 py-4 font-semibold text-muted-foreground cursor-pointer group hover:bg-muted transition-colors select-none" onClick={() => handleSort('answer')}>
+                      <div className="flex items-center">
+                        Trả lời {renderSortIcon('answer')}
+                      </div>
+                    </th>
+                    <th className="px-4 py-4 font-semibold text-muted-foreground cursor-pointer group hover:bg-muted transition-colors select-none" onClick={() => handleSort('hint')}>
+                      <div className="flex items-center">
+                        Gợi ý {renderSortIcon('hint')}
+                      </div>
+                    </th>
                     <th className="px-4 py-4 text-right font-semibold text-muted-foreground w-24">Thao tác</th>
                   </tr>
                 </thead>

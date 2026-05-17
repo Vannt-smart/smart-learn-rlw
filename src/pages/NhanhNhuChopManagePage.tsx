@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { 
   Plus, Trash2, Edit2, Loader2, Save, FileQuestion, 
   Upload, ArrowLeft, Download, Circle, X, HelpCircle,
-  LayoutGrid, Search
+  LayoutGrid, Search, ArrowUpDown, ArrowUp, ArrowDown
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -47,6 +47,7 @@ export default function NhanhNhuChopManagePage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' }>({ key: 'created_at', direction: 'desc' });
 
   // Form State
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -67,7 +68,9 @@ export default function NhanhNhuChopManagePage() {
         page: currentPage.toString(),
         limit: "30",
         searchTerm: searchTerm,
-        level: selectedLevel || ""
+        level: selectedLevel || "",
+        sortBy: sortConfig.key,
+        order: sortConfig.direction
       });
       const data = await apiFetch<PaginatedResponse>(`/nhanhnhuchop/questions?${query.toString()}`);
       setQuestions(data.questions);
@@ -82,7 +85,27 @@ export default function NhanhNhuChopManagePage() {
 
   useEffect(() => {
     fetchQuestions();
-  }, [currentPage, selectedLevel]);
+  }, [currentPage, selectedLevel, sortConfig]);
+
+  const handleSort = (key: string) => {
+    let direction: 'asc' | 'desc' = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+    setCurrentPage(1);
+  };
+
+  const renderSortIcon = (key: string) => {
+    if (sortConfig.key !== key) {
+      return <ArrowUpDown className="h-3 w-3 ml-1 opacity-20 group-hover:opacity-100 transition-opacity" />;
+    }
+    return sortConfig.direction === 'asc' ? (
+      <ArrowUp className="h-3 w-3 ml-1 text-emerald-500" />
+    ) : (
+      <ArrowDown className="h-3 w-3 ml-1 text-emerald-500" />
+    );
+  };
 
   // Handle search with a small delay
   useEffect(() => {
@@ -335,10 +358,22 @@ export default function NhanhNhuChopManagePage() {
                 <table className="w-full text-left text-sm">
                   <thead className="bg-slate-50/50 border-b border-border">
                     <tr>
-                      <th className="px-6 py-4 font-bold text-slate-500 uppercase tracking-wider text-[10px] w-40">Cấp độ</th>
-                      <th className="px-6 py-4 font-bold text-slate-500 uppercase tracking-wider text-[10px] min-w-[250px]">Câu hỏi</th>
+                      <th className="px-6 py-4 font-bold text-slate-500 uppercase tracking-wider text-[10px] w-40 cursor-pointer group hover:bg-slate-50 transition-colors select-none" onClick={() => handleSort('level')}>
+                        <div className="flex items-center">
+                          Cấp độ {renderSortIcon('level')}
+                        </div>
+                      </th>
+                      <th className="px-6 py-4 font-bold text-slate-500 uppercase tracking-wider text-[10px] min-w-[250px] cursor-pointer group hover:bg-slate-50 transition-colors select-none" onClick={() => handleSort('question')}>
+                        <div className="flex items-center">
+                          Câu hỏi {renderSortIcon('question')}
+                        </div>
+                      </th>
                       <th className="px-6 py-4 font-bold text-slate-500 uppercase tracking-wider text-[10px]">Trả lời</th>
-                      <th className="px-6 py-4 font-bold text-slate-500 uppercase tracking-wider text-[10px]">Gợi ý</th>
+                      <th className="px-6 py-4 font-bold text-slate-500 uppercase tracking-wider text-[10px] whitespace-nowrap cursor-pointer group hover:bg-slate-50 transition-colors select-none" onClick={() => handleSort('explanation')}>
+                        <div className="flex items-center">
+                          Gợi ý {renderSortIcon('explanation')}
+                        </div>
+                      </th>
                       <th className="px-6 py-4 text-right font-bold text-slate-500 uppercase tracking-wider text-[10px] w-28">Thao tác</th>
                     </tr>
                   </thead>

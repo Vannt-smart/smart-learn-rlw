@@ -74,8 +74,8 @@ app.use(`${API_PREFIX}`, (req, res, next) => {
     if (providedKey !== expectedKey) {
       const maskedExpected = expectedKey.substring(0, 4) + "...";
       const maskedProvided = providedKey ? providedKey.substring(0, 4) + "..." : "NONE";
-      logger.warn(`API Key mismatch`, { 
-        url: req.originalUrl, 
+      logger.warn(`API Key mismatch`, {
+        url: req.originalUrl,
         method: req.method,
         providedKey: maskedProvided,
         expectedKey: maskedExpected
@@ -478,7 +478,7 @@ app.post(`${API_PREFIX}/register`, async (req, res) => {
     const newUser = rows[0];
     const { accessToken, refreshToken, accessTokenExpiresAt } = await generateTokens(newUser.id);
 
-    logger.info(`New user registered: ${newUser.username}`, { userId: newUser.id, email: newUser.email });
+    logger.info(`New user registered: ${newUser.username}`, { userId: newUser.id });
 
     // Gửi email xác nhận đăng ký thành công
     if (newUser && newUser.email) {
@@ -690,7 +690,7 @@ app.get(`${API_PREFIX}/statistics/users`, async (req, res) => {
       ) e_counts ON u.id = e_counts.user_id
       ORDER BY u.created_at DESC
     `);
-
+    res.json(rows);
   } catch (err) {
     logger.error("GET /statistics/users Error", err);
     res.status(500).json({ error: "Lấy thống kê người dùng thất bại, vui lòng thử lại sau", details: err.message });
@@ -883,6 +883,7 @@ app.post(`${API_PREFIX}/users`, async (req, res) => {
       });
     }
 
+    res.status(201).json(newUser);
   } catch (err) {
     logger.error("POST /users Error", err);
     if (err.message?.includes("unique constraint") || err.message?.includes("duplicate key")) {
@@ -2877,8 +2878,13 @@ app.get(`${API_PREFIX}/proverbs/play`, async (req, res) => {
   }
 });
 app.get(`${API_PREFIX}/proverbs`, async (req, res) => {
+  const { sortBy = "created_at", order = "desc" } = req.query;
+  const validSortCols = ["content", "level", "created_at"];
+  const finalSortCol = validSortCols.includes(sortBy) ? sortBy : "created_at";
+  const finalOrder = order.toLowerCase() === "asc" ? "asc" : "desc";
+
   try {
-    const { rows } = await query(`select * from proverbs order by created_at desc`);
+    const { rows } = await query(`select * from proverbs order by ${finalSortCol} ${finalOrder}`);
     res.json(rows);
   } catch (err) {
     res.status(500).json({ error: "Lấy danh sách Ca dao tục ngữ thất bại" });
@@ -2961,10 +2967,15 @@ app.delete(`${API_PREFIX}/proverbs/:id`, async (req, res) => {
 });
 // ── Vua Tiếng Việt Endpoints ─────────────────────────────────────
 app.get(`${API_PREFIX}/vuatiengviet`, async (req, res) => {
-  const { page = 1, limit = 30, level } = req.query;
+  const { page = 1, limit = 30, level, sortBy = "created_at", order = "desc" } = req.query;
   const p = Math.max(1, Number(page));
   const l = Math.max(1, Number(limit));
   const offset = (p - 1) * l;
+
+  // Validate sort params to prevent SQL injection
+  const validSortCols = ["question", "answer", "hint", "level", "created_at"];
+  const finalSortCol = validSortCols.includes(sortBy) ? sortBy : "created_at";
+  const finalOrder = order.toLowerCase() === "asc" ? "asc" : "desc";
 
   try {
     let whereClause = "";
@@ -2975,7 +2986,7 @@ app.get(`${API_PREFIX}/vuatiengviet`, async (req, res) => {
     }
 
     // Fetch data
-    const querySql = `select * from vua_tieng_viet_questions ${whereClause} order by created_at desc limit $${params.length + 1} offset $${params.length + 2}`;
+    const querySql = `select * from vua_tieng_viet_questions ${whereClause} order by ${finalSortCol} ${finalOrder} limit $${params.length + 1} offset $${params.length + 2}`;
     const { rows } = await query(querySql, [...params, l, offset]);
 
     // Fetch total matching
@@ -3271,7 +3282,12 @@ app.get(`${API_PREFIX}/nhanhnhuchop/questions`, async (req, res) => {
     const limit = parseInt(req.query.limit) || 30;
     const offset = (page - 1) * limit;
 
-    const { searchTerm, level } = req.query;
+    const { searchTerm, level, sortBy = "created_at", order = "desc" } = req.query;
+
+    // Validate sort params to prevent SQL injection
+    const validSortCols = ["question", "level", "created_at", "explanation"];
+    const finalSortCol = validSortCols.includes(sortBy) ? sortBy : "created_at";
+    const finalOrder = order.toLowerCase() === "asc" ? "asc" : "desc";
 
     let whereClause = [];
     let params = [];
@@ -3292,7 +3308,7 @@ app.get(`${API_PREFIX}/nhanhnhuchop/questions`, async (req, res) => {
 
     // Fetch questions
     const { rows: questions } = await query(
-      `SELECT * FROM nhanh_nhu_chop_questions ${whereStr} ORDER BY created_at DESC LIMIT $${paramIdx} OFFSET $${paramIdx + 1}`,
+      `SELECT * FROM nhanh_nhu_chop_questions ${whereStr} ORDER BY ${finalSortCol} ${finalOrder} LIMIT $${paramIdx} OFFSET $${paramIdx + 1}`,
       [...params, limit, offset]
     );
 

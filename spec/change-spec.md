@@ -269,3 +269,24 @@ Nâng cấp tính nhất quán của giao diện người dùng trên toàn hệ
         - Đảo vị trí và cập nhật style cho cụm nút Import/Export Excel ở `QuizRepositoryPage`.
     - **Layout**: Tối ưu hiển thị metadata (Ngày tạo) trên `CoursesPage`.
 - **Assets**: Cập nhật thiết kế 3D cho logo icon của Smart Learn.
+
+---
+
+## 14. Nâng cấp Trải nghiệm Làm bài & Module Chép chính tả (Quiz & Dictation Enhancements)
+
+**Date:** 2026-05-17
+
+### Task Content
+Tối ưu hóa không gian hiển thị giao diện Làm bài trắc nghiệm (Quiz) theo chuẩn màn hình game, tinh chỉnh kích thước, màu sắc giúp người dùng tập trung hơn. Đồng thời, nâng cấp module Chép chính tả (Dictation) hỗ trợ tự tạo bài luyện tập cá nhân và siết chặt cơ chế chấm điểm.
+
+### Checklist
+- [x] Tái cấu trúc layout `QuizTakePage`: Chuyển Sidebar câu hỏi sang phải, mở rộng chiều ngang (max-w-7xl) và cố định thanh điều hướng ở dưới cùng.
+- [x] Tinh gọn UI Trắc nghiệm: Gộp Header thành 1 dòng, ẩn các thanh cuộn dọc (scrollbars) dư thừa và giảm font chữ để nội dung vừa vặn trên 1 màn hình.
+- [x] Nâng cấp hiển thị nội dung câu hỏi: Thêm màu nền xanh nhạt, bỏ in đậm, giữ nguyên định dạng xuống dòng (whitespace-pre-wrap) và chống co rút nút Radio/Checkbox.
+- [x] Bổ sung tính năng "Tạo bài tự chọn" cho game Chép chính tả thông qua Popup nhập liệu. (Chỉ lưu tạm thời trên phiên làm việc).
+- [x] Cập nhật logic chấm điểm Chép chính tả: Yêu cầu chính xác tuyệt đối chữ hoa, chữ thường và dấu câu.
+
+### Nội dung thay đổi
+- **Frontend**:
+    - `QuizTakePage.tsx`: Chuyển grid sang flex layout, bổ sung class Tailwind ẩn scrollbar (`[&::-webkit-scrollbar]:hidden`), cập nhật màu `bg-emerald-50`, thêm `shrink-0` chống co rút cho checkbox, và tinh chỉnh lại padding, text sizes.
+    - `DictationPlayPage.tsx`: Bổ sung Modal Dialog "Tạo bài tự chọn", cập nhật hàm `scoreText` gỡ bỏ `toLowerCase()` và regex xóa dấu câu để đối chiếu chuỗi gốc. Thêm nhãn level "Tự chọn".

@@ -261,7 +261,7 @@ export default function QuizRepositoryPage() {
           const subjectId = subjectName ? subjects.find(s => s.name.toLowerCase() === subjectName.toLowerCase())?.id : null;
 
           return {
-            content: type === "ordering" ? "Sắp xếp câu" : (row["Câu hỏi"] || "Câu hỏi không tên"),
+            content: (row["Câu hỏi"] || (type === "ordering" ? "Sắp xếp câu" : "Câu hỏi không tên")),
             type,
             options: rowOptions,
             subject_id: subjectId,

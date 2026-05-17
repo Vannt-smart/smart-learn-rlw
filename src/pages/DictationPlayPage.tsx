@@ -1,7 +1,8 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, CheckCircle2, RefreshCw, Loader2, BookText, AlertCircle, Trophy, Clock } from "lucide-react";
+import { ArrowLeft, CheckCircle2, RefreshCw, Loader2, BookText, AlertCircle, Trophy, Clock, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { apiFetch } from "@/lib/api";
 
 interface DictationExercise {
@@ -17,6 +18,7 @@ const LEVEL_LABELS: Record<string, { label: string; color: string }> = {
   medium:  { label: "Trung bình", color: "bg-blue-100 text-blue-700 border-blue-200" },
   hard:    { label: "Khó",        color: "bg-orange-100 text-orange-700 border-orange-200" },
   extreme: { label: "Cực khó",    color: "bg-red-100 text-red-700 border-red-200" },
+  custom:  { label: "Tự chọn",   color: "bg-purple-100 text-purple-700 border-purple-200" },
 };
 
 const LANG_FLAGS: Record<string, string> = { vi: "🇻🇳", en: "🇺🇸", ja: "🇯🇵" };
@@ -28,12 +30,11 @@ function scoreText(original: string, userInput: string): {
   correctWords: number;
   highlights: { word: string; correct: boolean }[];
 } {
-  const normalize = (s: string) => s.trim().toLowerCase().replace(/[.,!?;:'"()]/g, "");
   const origWords = (original || "").trim().split(/\s+/);
   const userWords = userInput.trim().split(/\s+/);
   let correct = 0;
   const highlights = origWords.map((word, i) => {
-    const match = normalize(word) === normalize(userWords[i] ?? "");
+    const match = word === (userWords[i] ?? "");
     if (match) correct++;
     return { word, correct: match };
   });
@@ -80,6 +81,28 @@ export default function DictationPlayPage() {
   const [userInput, setUserInput] = useState("");
   const [result, setResult] = useState<ReturnType<typeof scoreText> | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const [isCustomModalOpen, setIsCustomModalOpen] = useState(false);
+  const [customTitle, setCustomTitle] = useState("");
+  const [customContent, setCustomContent] = useState("");
+
+  const handleSaveCustom = () => {
+    if (!customTitle.trim() || !customContent.trim()) return;
+    stopTimer();
+    setResult(null);
+    setUserInput("");
+    setElapsed(0);
+    setNotFound(false);
+    setExercise({
+      id: "custom-" + Date.now(),
+      title: customTitle.trim(),
+      content: customContent.trim(),
+      level: "custom",
+      language: language
+    });
+    setIsCustomModalOpen(false);
+    startTimer();
+  };
 
   // ── Timer ─────────────────────────────────────────────────────────────────
   const [elapsed, setElapsed] = useState(0);      // seconds
@@ -186,9 +209,15 @@ export default function DictationPlayPage() {
               {formatTime(elapsed)}
             </div>
           )}
+          <Button variant="outline" size="sm" className="h-10 rounded-xl" onClick={() => setIsCustomModalOpen(true)}>
+            <Plus className="h-4 w-4 mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">Tạo bài tự chọn</span>
+            <span className="sm:hidden">Tự chọn</span>
+          </Button>
           <Button variant="outline" size="sm" className="h-10 rounded-xl" onClick={fetchExercise} disabled={loading}>
-            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
-            Bài khác
+            <RefreshCw className={`h-4 w-4 mr-1 sm:mr-2 ${loading ? "animate-spin" : ""}`} />
+            <span className="hidden sm:inline">Bài khác</span>
+            <span className="sm:hidden">Đổi bài</span>
           </Button>
         </div>
       </div>
@@ -315,6 +344,42 @@ export default function DictationPlayPage() {
           </div>
         </div>
       )}
+      <Dialog open={isCustomModalOpen} onOpenChange={setIsCustomModalOpen}>
+        <DialogContent className="sm:max-w-[600px] rounded-3xl p-6 border-none shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-heading text-gray-800">Tạo bài chép chính tả tự chọn</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-2">
+            <div className="space-y-1.5">
+              <label className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Tiêu đề</label>
+              <input
+                value={customTitle}
+                onChange={(e) => setCustomTitle(e.target.value)}
+                placeholder="Nhập tiêu đề..."
+                className="w-full rounded-xl border-2 border-input bg-background px-4 py-2.5 text-sm focus:outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/10 transition-all"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Nội dung</label>
+              <textarea
+                value={customContent}
+                onChange={(e) => setCustomContent(e.target.value)}
+                placeholder="Nhập nội dung đoạn văn..."
+                rows={8}
+                className="w-full rounded-xl border-2 border-input bg-background px-4 py-3 text-sm focus:outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/10 transition-all resize-none"
+              />
+            </div>
+            <div className="flex justify-end gap-3 pt-4">
+              <Button variant="ghost" className="rounded-xl" onClick={() => setIsCustomModalOpen(false)}>
+                Hủy
+              </Button>
+              <Button className="rounded-xl px-6" onClick={handleSaveCustom} disabled={!customTitle.trim() || !customContent.trim()}>
+                Lưu
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

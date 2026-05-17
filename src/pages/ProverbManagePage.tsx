@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  ArrowLeft, Plus, Pencil, Trash2, Quote, Loader2, X, AlertCircle, Layers
+  ArrowLeft, Plus, Pencil, Trash2, Quote, Loader2, X, AlertCircle, Layers, ArrowUpDown, ArrowUp, ArrowDown
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { apiFetch } from "@/lib/api";
@@ -243,16 +243,17 @@ export default function ProverbManagePage() {
   const [editTarget, setEditTarget] = useState<Proverb | null>(null);
   const [selectedFilter, setSelectedFilter] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' }>({ key: 'created_at', direction: 'desc' });
 
   const handleFilterChange = (val: string | null) => {
     setSelectedFilter(val);
     setCurrentPage(1);
   };
 
-  const fetchProverbs = async () => {
+  const fetchProverbs = async (sort = sortConfig) => {
     setLoading(true);
     try {
-      const data = await apiFetch<Proverb[]>("/proverbs");
+      const data = await apiFetch<Proverb[]>(`/proverbs?sortBy=${sort.key}&order=${sort.direction}`);
       setProverbs(data || []);
     } catch {
       setProverbs([]);
@@ -261,7 +262,27 @@ export default function ProverbManagePage() {
     }
   };
 
-  useEffect(() => { fetchProverbs(); }, []);
+  useEffect(() => { fetchProverbs(sortConfig); }, [sortConfig]);
+
+  const handleSort = (key: string) => {
+    let direction: 'asc' | 'desc' = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+    setCurrentPage(1);
+  };
+
+  const renderSortIcon = (key: string) => {
+    if (sortConfig.key !== key) {
+      return <ArrowUpDown className="h-3.5 w-3.5 ml-1 opacity-20 group-hover:opacity-100 transition-opacity" />;
+    }
+    return sortConfig.direction === 'asc' ? (
+      <ArrowUp className="h-3.5 w-3.5 ml-1 text-primary" />
+    ) : (
+      <ArrowDown className="h-3.5 w-3.5 ml-1 text-primary" />
+    );
+  };
 
   const handleCreate = async (form: FormState) => {
     await apiFetch("/proverbs", { method: "POST", body: JSON.stringify(form) });
@@ -398,9 +419,21 @@ export default function ProverbManagePage() {
                     <table className="w-full text-left text-sm whitespace-nowrap">
                       <thead className="bg-muted/50 border-b border-border">
                         <tr>
-                          <th className="px-4 py-4 font-semibold text-muted-foreground w-28">Cấp độ</th>
-                          <th className="px-4 py-4 font-semibold text-muted-foreground min-w-[300px]">Nội dung câu</th>
-                          <th className="px-4 py-4 font-semibold text-muted-foreground w-32">Ngày tạo</th>
+                          <th className="px-4 py-4 font-semibold text-muted-foreground w-28 cursor-pointer group hover:bg-muted transition-colors select-none" onClick={() => handleSort('level')}>
+                            <div className="flex items-center">
+                              Cấp độ {renderSortIcon('level')}
+                            </div>
+                          </th>
+                          <th className="px-4 py-4 font-semibold text-muted-foreground min-w-[300px] cursor-pointer group hover:bg-muted transition-colors select-none" onClick={() => handleSort('content')}>
+                            <div className="flex items-center">
+                              Nội dung câu {renderSortIcon('content')}
+                            </div>
+                          </th>
+                          <th className="px-4 py-4 font-semibold text-muted-foreground w-32 cursor-pointer group hover:bg-muted transition-colors select-none" onClick={() => handleSort('created_at')}>
+                            <div className="flex items-center">
+                              Ngày tạo {renderSortIcon('created_at')}
+                            </div>
+                          </th>
                           <th className="px-4 py-4 text-right font-semibold text-muted-foreground w-24">Thao tác</th>
                         </tr>
                       </thead>
