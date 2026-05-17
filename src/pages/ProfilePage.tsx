@@ -50,6 +50,7 @@ export default function ProfilePage() {
   const [deleteReason, setDeleteReason] = useState("");
   const [otherReason, setOtherReason] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showPasswordSuccessModal, setShowPasswordSuccessModal] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -161,17 +162,7 @@ export default function ProfilePage() {
     setLoading(true);
 
     try {
-      // Update password if provided
-      if (password) {
-        const pwResult = await changePassword(user.id, password);
-        if (!pwResult.ok) {
-          setError(pwResult.message || "Không thể đổi mật khẩu");
-          setLoading(false);
-          return;
-        }
-      }
-
-      // Update info
+      // 1. Update info first
       const result = await updateUser(
         user.id, 
         displayName, 
@@ -182,27 +173,48 @@ export default function ProfilePage() {
         user.isActive
       );
 
-      if (result.ok) {
-        toast.success("Cập nhật thông tin cá nhân thành công");
-        
-        // Merge with current session to avoid losing fields
-        const currentSession = JSON.parse(sessionStorage.getItem("hvui-session-v1") || "{}");
-        // We know we updated these specific fields
-        const updatedSession = { 
-          ...currentSession, 
-          displayName, 
-          educationLevel,
-          email,
-          avatarUrl: avatarUrl.startsWith('blob:') ? currentSession.avatarUrl : avatarUrl // Don't save blob URLs
-        };
-        sessionStorage.setItem("hvui-session-v1", JSON.stringify(updatedSession));
-        
-        refresh();
-        setPassword("");
-        setConfirmPassword("");
-      } else {
+      if (!result.ok) {
         setError((result as any).message || "Không thể cập nhật thông tin");
+        setLoading(false);
+        return;
       }
+
+      // Merge with current session to avoid losing fields
+      const currentSession = JSON.parse(sessionStorage.getItem("hvui-session-v1") || "{}");
+      // We know we updated these specific fields
+      const updatedSession = { 
+        ...currentSession, 
+        displayName, 
+        educationLevel,
+        email,
+        avatarUrl: avatarUrl.startsWith('blob:') ? currentSession.avatarUrl : avatarUrl // Don't save blob URLs
+      };
+      sessionStorage.setItem("hvui-session-v1", JSON.stringify(updatedSession));
+      
+      // Chỉ cập nhật session ở React context nếu KHÔNG đổi mật khẩu
+      // Vì nếu đổi mật khẩu, ta sẽ bắt buộc đăng nhập lại ngay lập tức
+      if (!password) {
+        refresh();
+      }
+
+      // 2. Update password if provided
+      if (password) {
+        const pwResult = await changePassword(user.id, password);
+        if (!pwResult.ok) {
+          setError(pwResult.message || "Không thể đổi mật khẩu");
+          setLoading(false);
+          return;
+        }
+        
+        // Show success alert and force logout
+        setShowPasswordSuccessModal(true);
+        setLoading(false);
+        return;
+      }
+
+      toast.success("Cập nhật thông tin cá nhân thành công");
+      setPassword("");
+      setConfirmPassword("");
     } catch (err: any) {
       setError(err.message || "Đã xảy ra lỗi");
     } finally {
@@ -569,6 +581,31 @@ export default function ProfilePage() {
           </form>
         </div>
       </div>
+      
+      <AlertDialog open={showPasswordSuccessModal} onOpenChange={setShowPasswordSuccessModal}>
+        <AlertDialogContent className="rounded-3xl max-w-md border-border shadow-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-xl font-black text-primary flex items-center gap-2">
+              <CheckCircle2 className="h-6 w-6 text-primary" />
+              Đổi mật khẩu thành công!
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Mật khẩu của bạn đã được thay đổi. Tất cả các phiên đăng nhập cũ trên thiết bị khác sẽ bị vô hiệu hóa. Vui lòng đăng nhập lại bằng mật khẩu mới.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction 
+              onClick={() => {
+                setShowPasswordSuccessModal(false);
+                logout();
+              }}
+              className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-xl font-bold px-6 h-11 shadow-lg shadow-primary/20 w-full sm:w-auto"
+            >
+              Đăng nhập lại
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

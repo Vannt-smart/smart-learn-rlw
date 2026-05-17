@@ -12,8 +12,9 @@
 3. [File Upload](#file-upload)
 4. [Health Check](#health-check)
 5. [System Settings](#system-settings)
-   - [GET /settings/default-plan](#get-apisettingsdefault-plan)
-   - [PUT /settings/default-plan](#put-apisettingsdefault-plan-admin-only)
+   - [GET /settings/global](#get-apisettingsglobal)
+   - [PUT /settings/global](#put-apisettingsglobal-admin-only)
+   - [GET /version-app](#get-apiversion-app-public)
 5.1 [Plans Management](#plans-management)
    - [GET /plans](#get-apiplans)
    - [GET /admin/plans](#get-apiadminplans-admin-only)
@@ -233,37 +234,59 @@ Upload a single file (generic).
 
 ## ⚙️ System Settings
 
-### `GET /api/settings/default-plan`
-Fetch the current default plan for new users.
+### `GET /api/settings/global`
+Fetch the current global settings including default plan and app version.
 
 **Response:** `200 OK`
 ```json
-{ "plan": "Miễn phí" }
+{
+  "plan": "Miễn phí",
+  "appVersion": "1.0.0"
+}
 ```
 
 **Errors:**
 | HTTP | Điều kiện | Message |
 |------|-----------|---------|
-| `500` | Lỗi server | `"Failed to get default plan"` |
+| `500` | Lỗi server | `"Lấy thiết định thất bại, vui lòng thử lại sau"` |
 
-### `PUT /api/settings/default-plan` *(Admin only)*
-Update the default plan for new users.
+### `PUT /api/settings/global` *(Admin only)*
+Update the global settings (default plan and app version).
 
 **Request Body:**
-| Field  | Type   | Required |
-|--------|--------|----------|
-| `plan` | string | ✅       |
+| Field        | Type   | Required | Description |
+|--------------|--------|----------|-------------|
+| `plan`       | string | ✅       | Gói dịch vụ mặc định khi đăng ký |
+| `appVersion` | string | ❌       | Phiên bản ứng dụng |
 
 **Response:** `200 OK`
 ```json
-{ "plan": "1 tháng" }
+{
+  "plan": "1 tháng",
+  "appVersion": "1.0.1"
+}
 ```
 
 **Errors:**
 | HTTP | Điều kiện | Message |
 |------|-----------|---------|
-| `400` | Thiếu trường `plan` | `"Missing plan"` |
-| `500` | Lỗi server | `"Failed to update default plan"` |
+| `400` | Thiếu trường `plan` | `"Vui lòng chọn gói dịch vụ"` |
+| `500` | Lỗi server | `"Cập nhật thiết định thất bại, vui lòng thử lại sau"` |
+
+### `GET /api/version-app` *(Public)*
+Retrieve the current app version configured in settings. This is a public API without authentication.
+
+**Response:** `200 OK`
+```json
+{
+  "version": "1.0.0"
+}
+```
+
+**Errors:**
+| HTTP | Điều kiện | Message |
+|------|-----------|---------|
+| `500` | Lỗi server | `"Lấy phiên bản ứng dụng thất bại"` |
 
 ## 💼 Plans Management
 

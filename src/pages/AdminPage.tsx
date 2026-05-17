@@ -531,21 +531,23 @@ function ChangePwModal({ user, onClose }: { user: User; onClose: () => void }) {
 function SettingsModal({ plans, onClose }: { plans: any[]; onClose: () => void }) {
   const queryClient = useQueryClient();
   const [plan, setPlan] = useState("Miễn phí");
+  const [appVersion, setAppVersion] = useState("");
 
   const { data, isLoading } = useQuery({
-    queryKey: ["settings", "default-plan"],
-    queryFn: () => apiFetch("/settings/default-plan"),
+    queryKey: ["settings", "global"],
+    queryFn: () => apiFetch("/settings/global"),
   });
 
   useEffect(() => {
     if (data?.plan) setPlan(data.plan);
+    if (data?.appVersion) setAppVersion(data.appVersion);
   }, [data]);
 
   const mutation = useMutation({
-    mutationFn: (newPlan: string) => apiFetch("/settings/default-plan", { method: "PUT", body: JSON.stringify({ plan: newPlan }) }),
+    mutationFn: (payload: any) => apiFetch("/settings/global", { method: "PUT", body: JSON.stringify(payload) }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["settings", "default-plan"] });
-      toast.success("Đã cập nhật gói cước mặc định");
+      queryClient.invalidateQueries({ queryKey: ["settings", "global"] });
+      toast.success("Đã cập nhật thiết định");
       onClose();
     },
     onError: () => toast.error("Cập nhật thất bại"),
@@ -560,21 +562,30 @@ function SettingsModal({ plans, onClose }: { plans: any[]; onClose: () => void }
           </h2>
           <button onClick={onClose} className="text-muted-foreground hover:text-foreground"><X className="h-5 w-5" /></button>
         </div>
-        <p className="text-sm text-muted-foreground">Chọn gói cước mặc định gán cho User khi đăng ký mới:</p>
         
         {isLoading ? (
           <div className="flex justify-center py-4">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
         ) : (
-          <form onSubmit={(e) => { e.preventDefault(); mutation.mutate(plan); }} className="space-y-4">
-            <select value={plan} onChange={(e) => setPlan(e.target.value)}
-              className="w-full rounded-xl border-2 border-input bg-background px-4 py-2.5 text-sm font-medium focus:border-primary focus:outline-none">
-              {plans.map(p => (
-                <option key={p.id} value={p.name}>{p.name}</option>
-              ))}
-            </select>
-            <div className="flex gap-3">
+          <form onSubmit={(e) => { e.preventDefault(); mutation.mutate({ plan, appVersion }); }} className="space-y-4">
+            <div className="space-y-1.5">
+              <label className="text-sm font-semibold text-muted-foreground">Chọn gói cước mặc định gán cho User khi đăng ký mới:</label>
+              <select value={plan} onChange={(e) => setPlan(e.target.value)}
+                className="w-full rounded-xl border-2 border-input bg-background px-4 py-2.5 text-sm font-medium focus:border-primary focus:outline-none">
+                {plans.map(p => (
+                  <option key={p.id} value={p.name}>{p.name}</option>
+                ))}
+              </select>
+            </div>
+            
+            <div className="space-y-1.5">
+              <label className="text-sm font-semibold text-muted-foreground">Phiên bản ứng dụng (App Version):</label>
+              <input value={appVersion} onChange={(e) => setAppVersion(e.target.value)} placeholder="vd: 1.0.0"
+                className="w-full rounded-xl border-2 border-input bg-background px-4 py-2.5 text-sm font-medium focus:border-primary focus:outline-none" />
+            </div>
+
+            <div className="flex gap-3 pt-2">
               <Button type="button" variant="outline" onClick={onClose} className="flex-1 rounded-xl border-red-500 text-red-500 hover:bg-red-50 font-bold">Hủy</Button>
               <Button type="submit" className="flex-1 rounded-xl shadow-md shadow-primary/20" disabled={mutation.isPending}>
                 {mutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Lưu thiết định

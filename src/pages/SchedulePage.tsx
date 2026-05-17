@@ -463,8 +463,20 @@ function TimetableTab({ userId }: { userId: string }) {
               placeholder="Tên loại..."
               className="rounded-full border border-border bg-background px-3 py-1 text-xs focus:border-primary focus:outline-none"
             />
-            <button onClick={addGroup} className="text-primary hover:text-primary/80"><Check className="h-4 w-4" /></button>
-            <button onClick={() => setIsAddingGroup(false)} className="text-muted-foreground hover:text-foreground"><X className="h-4 w-4" /></button>
+            <button 
+              onClick={addGroup} 
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary transition-all active:scale-95 shadow-sm"
+              title="Lưu"
+            >
+              <Check className="h-5 w-5" />
+            </button>
+            <button 
+              onClick={() => setIsAddingGroup(false)} 
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-600 transition-all active:scale-95 shadow-sm"
+              title="Hủy"
+            >
+              <X className="h-5 w-5" />
+            </button>
           </div>
         )}
       </div>

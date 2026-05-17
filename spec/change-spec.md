@@ -290,3 +290,32 @@ Tối ưu hóa không gian hiển thị giao diện Làm bài trắc nghiệm (Q
 - **Frontend**:
     - `QuizTakePage.tsx`: Chuyển grid sang flex layout, bổ sung class Tailwind ẩn scrollbar (`[&::-webkit-scrollbar]:hidden`), cập nhật màu `bg-emerald-50`, thêm `shrink-0` chống co rút cho checkbox, và tinh chỉnh lại padding, text sizes.
     - `DictationPlayPage.tsx`: Bổ sung Modal Dialog "Tạo bài tự chọn", cập nhật hàm `scoreText` gỡ bỏ `toLowerCase()` và regex xóa dấu câu để đối chiếu chuỗi gốc. Thêm nhãn level "Tự chọn".
+
+---
+
+## 15. Quản lý Phiên bản & Vô hiệu hóa Phiên đăng nhập khi đổi mật khẩu (App Version Management & Security Enhancements)
+
+**Date:** 2026-05-17
+
+### Task Content
+Bổ sung cấu hình quản lý Phiên bản ứng dụng (App Version), cung cấp API công khai cho Mobile App kiểm tra phiên bản và nâng cao bảo mật bằng cách vô hiệu hóa toàn bộ các phiên đăng nhập cũ (session) ngay sau khi người dùng thay đổi mật khẩu thành công.
+
+### Checklist
+- [x] Thêm cấu hình phiên bản ứng dụng (`appVersion`) vào Cơ sở dữ liệu thông qua endpoint `/settings/global`.
+- [x] Cập nhật giao diện Quản trị viên (`AdminPage.tsx`) tích hợp trường nhập liệu Phiên bản ứng dụng vào Modal Thiết định.
+- [x] Triển khai API công khai `GET /api/version-app` không yêu cầu xác thực để phục vụ kiểm tra phiên bản trên Mobile App.
+- [x] Cập nhật API đổi mật khẩu (`PUT /api/users/:id/password`) tự động sinh mới `session_token` và `refresh_token` để vô hiệu hóa phiên đăng nhập cũ.
+- [x] Tối ưu giao diện Đổi mật khẩu (`ProfilePage.tsx`): Thực hiện cập nhật thông tin cá nhân trước, sau đó đổi mật khẩu, hiển thị Popup thông báo thành công và bắt buộc đăng nhập lại.
+- [x] Tối ưu hóa kích thước nút Lưu (Check) và Hủy (X) khi thêm mới nhóm Thời khóa biểu trong `SchedulePage.tsx` giúp người dùng dễ dàng thao tác trên thiết bị Web Mobile.
+
+### Nội dung thay đổi
+- **Backend**:
+    - `server/index.mjs`:
+        - Tách biệt endpoint `/settings/default-plan` thành `/settings/global` hỗ trợ cả Gói cước mặc định và Phiên bản ứng dụng.
+        - Viết mới API `/api/version-app` và đưa vào danh sách ngoại lệ của Session Middleware để cho phép truy cập public.
+        - Cập nhật API đổi mật khẩu để gán `session_token` và `refresh_token` bằng các UUID ngẫu nhiên mới của `crypto`.
+- **Frontend**:
+    - `AdminPage.tsx`: Mở rộng `SettingsModal` hiển thị thêm form nhập phiên bản ứng dụng, kết nối dữ liệu từ query `/settings/global`.
+    - `ProfilePage.tsx`: Thêm state `showPasswordSuccessModal`, tái cấu trúc hàm `handleSubmit` đảm bảo cập nhật thông tin cá nhân thành công rồi mới đổi mật khẩu, hiển thị `AlertDialog` thông báo đăng nhập lại và gọi hàm `logout()`.
+    - `SchedulePage.tsx`: Tăng kích thước 2 nút Lưu (Check) và Hủy (X) bên cạnh ô nhập `Tên loại...` từ 16px lên 32px (`h-8 w-8`), sử dụng thiết kế hình tròn (`rounded-full`), căn giữa flexbox, hỗ trợ màu nền tinh tế (`bg-primary/10`, `bg-red-50`) và hiệu ứng hover/active/scale-95 giúp trải nghiệm click trên Mobile mượt mà, dễ chịu hơn rất nhiều.
+- **Documentation**: Cập nhật file đặc tả [spec/api.md](file:///d:/smart-learn-rlw/spec/api.md) để đồng bộ hóa các endpoint mới.

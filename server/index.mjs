@@ -270,6 +270,7 @@ app.use(async (req, res, next) => {
     req.path.startsWith(`${API_PREFIX}/forgot-password`) ||
     req.path.startsWith(`${API_PREFIX}/contact`) ||
     req.path.startsWith(`${API_PREFIX}/nhanhnhuchop/play`) ||
+    req.path.startsWith(`${API_PREFIX}/version-app`) ||
     (req.path.startsWith(`${API_PREFIX}/system-pages`) && req.method === "GET")
   ) {
     return next();
@@ -408,33 +409,59 @@ async function sendRegistrationEmail(email, displayName) {
   return sendMail(email, subject, html);
 }
 // ── Settings Endpoints ──────────────────────────────────────────────────────
-app.get(`${API_PREFIX}/settings/default-plan`, async (req, res) => {
+app.get(`${API_PREFIX}/settings/global`, async (req, res) => {
   try {
-    const { rows } = await query(`SELECT value FROM system_settings WHERE key = 'default_user_plan'`);
-    const plan = rows[0]?.value?.plan || "Miễn phí";
-    res.json({ plan });
+    const { rows: planRows } = await query(`SELECT value FROM system_settings WHERE key = 'default_user_plan'`);
+    const plan = planRows[0]?.value?.plan || "Miễn phí";
+
+    const { rows: versionRows } = await query(`SELECT value FROM system_settings WHERE key = 'app_version'`);
+    const appVersion = versionRows[0]?.value?.version || "1.0.0";
+
+    res.json({ plan, appVersion });
   } catch (err) {
-    console.error("GET default-plan Error:", err.message);
-    res.status(500).json({ error: "Lấy gói dịch vụ mặc định thất bại, vui lòng thử lại sau" });
+    console.error("GET global settings Error:", err.message);
+    res.status(500).json({ error: "Lấy thiết định thất bại, vui lòng thử lại sau" });
   }
 });
 
-app.put(`${API_PREFIX}/settings/default-plan`, async (req, res) => {
-  const { plan } = req.body || {};
+app.get(`${API_PREFIX}/version-app`, async (req, res) => {
+  try {
+    const { rows } = await query(`SELECT value FROM system_settings WHERE key = 'app_version'`);
+    const appVersion = rows[0]?.value?.version || "1.0.0";
+    res.json({ version: appVersion });
+  } catch (err) {
+    console.error("GET version-app Error:", err.message);
+    res.status(500).json({ error: "Lấy phiên bản ứng dụng thất bại" });
+  }
+});
+
+app.put(`${API_PREFIX}/settings/global`, async (req, res) => {
+  const { plan, appVersion } = req.body || {};
   if (!plan) return res.status(400).json({ error: "Vui lòng chọn gói dịch vụ" });
 
   try {
-    const value = JSON.stringify({ plan });
+    const planValue = JSON.stringify({ plan });
     await query(
       `INSERT INTO system_settings (key, value, updated_at) 
        VALUES ('default_user_plan', $1, NOW()) 
        ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()`,
-      [value]
+      [planValue]
     );
-    res.json({ plan });
+
+    if (appVersion) {
+      const versionValue = JSON.stringify({ version: appVersion });
+      await query(
+        `INSERT INTO system_settings (key, value, updated_at) 
+         VALUES ('app_version', $1, NOW()) 
+         ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = NOW()`,
+        [versionValue]
+      );
+    }
+
+    res.json({ plan, appVersion });
   } catch (err) {
-    console.error("PUT default-plan Error:", err.message);
-    res.status(500).json({ error: "Cập nhật gói dịch vụ thất bại, vui lòng thử lại sau" });
+    console.error("PUT global settings Error:", err.message);
+    res.status(500).json({ error: "Cập nhật thiết định thất bại, vui lòng thử lại sau" });
   }
 });
 
@@ -952,7 +979,12 @@ app.put(`${API_PREFIX}/users/:id/password`, async (req, res) => {
   if (!password) return res.status(400).json({ error: "Vui lòng nhập mật khẩu mới" });
   try {
     const hash = await hashPassword(password);
-    await query(`update users set password_hash = $1 where id = $2`, [hash, id]);
+    const newSessionToken = crypto.randomUUID();
+    const newRefreshToken = crypto.randomUUID();
+    await query(
+      `update users set password_hash = $1, session_token = $2, refresh_token = $3 where id = $4`,
+      [hash, newSessionToken, newRefreshToken, id]
+    );
     res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ error: "Đổi mật khẩu thất bại, vui lòng thử lại sau" });
